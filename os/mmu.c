@@ -47,8 +47,7 @@ uintptr_t vm_create_address_space(void) {
     if (!root_pa) return 0;
     vm_zero_page(root_pa);
     uint64_t *root = (uint64_t *)root_pa;
-    root[0] = l1_table[0];
-    root[1] = l1_table[1];
+    for (uint32_t i = 0; i < 512; ++i) root[i] = l1_table[i];
     return root_pa;
 }
 
