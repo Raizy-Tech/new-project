@@ -105,7 +105,7 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("SVC returned successfully.\n");
 
     uart_set_base(dtb.uart_base);
-    gic_init(dtb.gicd_base, dtb.gicr_base);
+    gic_init(dtb.gicd_base, dtb.gicr_base, dtb.timer_ppi);
     timer_init(0);
     uart_puts("Milestone 3: GICv3 + generic timer ONLINE\n");
     uart_puts("Milestone 4: timer IRQs ONLINE\n");
