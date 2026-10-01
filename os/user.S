@@ -8,6 +8,10 @@ user_program_start:
     mov x0, #0x2a
     mov x8, #1
     svc #0
+    mov x8, #3
+    svc #0
+    mov x8, #4
+    svc #0
     mov x8, #2
     svc #0
 1:
