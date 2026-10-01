@@ -28,6 +28,7 @@ struct thread {
     void *stack;
     uint64_t stack_size;
     struct irq_frame *frame;
+    uint8_t started;
     uintptr_t page_table;
 };
 
@@ -65,6 +66,7 @@ void sched_init(void) {
     threads[0].stack = 0;
     threads[0].stack_size = 0;
     threads[0].frame = 0;
+    threads[0].started = 1;
     threads[0].page_table = vm_current_kernel_root();
     current = 0;
     switch_count = 0;
@@ -107,6 +109,7 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
     t->frame->elr = (uint64_t)entry;
     t->frame->spsr = 0x5ULL;
     t->frame->reserved = 0;
+    t->started = 0;
     t->ctx.x19 = (uint64_t)entry;
     t->ctx.x20 = 0; t->ctx.x21 = 0; t->ctx.x22 = 0; t->ctx.x23 = 0;
     t->ctx.x24 = 0; t->ctx.x25 = 0; t->ctx.x26 = 0; t->ctx.x27 = 0;
@@ -120,7 +123,7 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
 static uint32_t next_ready(void) {
     for (uint32_t step = 1; step < MAX_THREADS; ++step) {
         uint32_t i = (current + step) % MAX_THREADS;
-        if (threads[i].state == THREAD_READY && threads[i].frame == 0) return i;
+        if (threads[i].state == THREAD_READY && !threads[i].started) return i;
     }
     return current;
 }
@@ -137,9 +140,12 @@ void sched_yield(void) {
     ++switch_count;
     if (threads[next].page_table != threads[old].page_table)
         vm_switch_address_space(threads[next].page_table);
-    set_exception_stack((uint8_t *)threads[next].stack + threads[next].stack_size);
+
+    threads[next].started = 1;
+    threads[next].frame = 0;
     interrupts_restore();
     context_switch(&threads[old].ctx, &threads[next].ctx);
+    set_exception_stack((uint8_t *)threads[next].stack + threads[next].stack_size);
 }
 
 uint64_t sched_current_id(void) { return threads[current].id; }
@@ -158,6 +164,7 @@ struct irq_frame *sched_preempt(struct irq_frame *frame) {
             threads[old].state = THREAD_READY;
             threads[i].state = THREAD_RUNNING;
             threads[i].frame = 0;
+            threads[i].started = 1;
             current = i;
             ++switch_count;
             ++preempt_switch_count;
