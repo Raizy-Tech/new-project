@@ -39,6 +39,7 @@ static struct process proc;
 static uint64_t next_pid = 1;
 
 void uart_puts_public(const char *);
+void process_exit_return(void);
 
 static void process_hex64(uint64_t v) {
     static const char h[] = "0123456789abcdef";
@@ -169,7 +170,9 @@ struct irq_frame *process_syscall_dispatch(struct irq_frame *frame) {
         ++proc.syscalls;
         uart_puts_public("[SYSCALL] exit requested.\n");
         process_destroy();
-        frame = sched_preempt(frame);
+        frame->x[0] = 0;
+        frame->elr = (uint64_t)process_exit_return;
+        frame->spsr = 0x5ULL;
         break;
     case 3:
         syscall_getpid(frame);
@@ -248,3 +251,10 @@ int process_start_user(void) {
 }
 
 /* scheduler fault-symbol validation trigger */
+
+
+void process_exit_return(void) {
+    uart_puts_public("[PROCESS] returned to kernel after exit.\n");
+    sched_yield();
+    for (;;) __asm__ volatile("wfi");
+}
