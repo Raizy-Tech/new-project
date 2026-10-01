@@ -134,11 +134,16 @@ void kernel_main(uintptr_t dtb_address) {
     } else {
         volatile uint64_t *vm_ptr = (volatile uint64_t *)vm_va;
         *vm_ptr = 0x5241495a594f444dULL;
-        if (*vm_ptr == 0x5241495a594f444dULL &&
-            vm_unmap_page(vm_va)) {
+        if (*vm_ptr == 0x5241495a594f444dULL && vm_unmap_page(vm_va)) {
             pmm_free_page(vm_page);
             if (pmm_free_count() == vm_before)
                 uart_puts("VM: dynamic PMM-backed mapping PASSED.\n");
+            else
+                uart_puts("VM: dynamic mapping reclaim FAILED.\n");
+        } else {
+            uart_puts("VM: dynamic mapping read/write FAILED.\n");
+        }
+    }
 
     heap_init();
     uart_puts("Heap: page-backed kernel heap test...\n");
@@ -159,12 +164,6 @@ void kernel_main(uintptr_t dtb_address) {
             uart_puts("Heap: allocation/read-write/free test PASSED.\n");
         else
             uart_puts("Heap: reclaim test FAILED.\n");
-    }
-            else
-                uart_puts("VM: dynamic mapping reclaim FAILED.\n");
-        } else {
-            uart_puts("VM: dynamic mapping read/write FAILED.\n");
-        }
     }
 
     for (;;) __asm__ volatile("wfi");
