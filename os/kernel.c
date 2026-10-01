@@ -4,8 +4,10 @@
 #include "pmm.h"
 #include "dtb.h"
 #include "heap.h"
+#include "sched.h"
 
 void exception_vectors(void);
+void sched_test_start(void);
 void mmu_init(void);
 void mmu_test(void);
 int vm_map_page(uintptr_t va, uintptr_t pa);
@@ -165,6 +167,10 @@ void kernel_main(uintptr_t dtb_address) {
         else
             uart_puts("Heap: reclaim test FAILED.\n");
     }
+
+    uart_puts("Milestone 8: kernel scheduler...\n");
+    sched_init();
+    sched_test_start();
 
     for (;;) __asm__ volatile("wfi");
 }
