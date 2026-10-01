@@ -255,6 +255,6 @@ int process_start_user(void) {
 
 void process_exit_return(void) {
     uart_puts_public("[PROCESS] returned to kernel after exit.\n");
-    sched_yield();
+    shell_start();
     for (;;) __asm__ volatile("wfi");
 }
