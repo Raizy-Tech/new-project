@@ -76,7 +76,7 @@ static void syscall_getpid(struct irq_frame *frame) {
     frame->x[0] = proc.pid;
 }
 
-void process_syscall_dispatch(struct irq_frame *frame) {
+struct irq_frame *process_syscall_dispatch(struct irq_frame *frame) {
     switch (frame->x[8]) {
     case 1:
         syscall_write(frame);
@@ -103,13 +103,7 @@ void process_syscall_dispatch(struct irq_frame *frame) {
         break;
     }
 
-    /*
-     * The exception entry code consumes the returned frame pointer. The
-     * scheduler may replace it with another task's saved frame.
-     */
-    if (frame) {
-        __asm__ volatile("mov x19, %0" :: "r"(frame) : "x19");
-    }
+    return frame;
 }
 
 int process_start_user(void) {
