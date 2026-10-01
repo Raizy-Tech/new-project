@@ -108,6 +108,7 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
     t->stack_size = stack_size;
     t->frame = (struct irq_frame *)(top - sizeof(struct irq_frame));
     for (uint32_t i = 0; i < 31; ++i) t->frame->x[i] = 0;
+    t->frame->x[19] = (uint64_t)entry;
     t->frame->x[30] = (uint64_t)thread_trampoline;
     t->frame->elr = (uint64_t)entry;
     t->frame->spsr = 0x4ULL;
