@@ -5,6 +5,7 @@
 #include "dtb.h"
 #include "heap.h"
 #include "sched.h"
+#include "process.h"
 
 void exception_vectors(void);
 void sched_test_start(void);
@@ -167,6 +168,9 @@ void kernel_main(uintptr_t dtb_address) {
         else
             uart_puts("Heap: reclaim test FAILED.\n");
     }
+
+    uart_puts("Milestone 9: user process + syscall boundary...\n");
+    process_start_user();
 
     uart_puts("Milestone 8: kernel scheduler...\n");
     sched_init();
