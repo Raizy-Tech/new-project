@@ -2,6 +2,8 @@
 #define PROCESS_H
 #include <stdint.h>
 
+struct irq_frame;
+
 enum process_state {
     PROCESS_UNUSED = 0,
     PROCESS_READY,
