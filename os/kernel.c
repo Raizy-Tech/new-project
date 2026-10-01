@@ -79,6 +79,8 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("Platform: QEMU virt / GICv3\n");
 
     struct dtb_info dtb;
+    /* QEMU virt places the boot DTB at the beginning of guest RAM. */
+    dtb_address = 0x40000000ULL;
     if (!dtb_init(dtb_address, &dtb)) {
         uart_puts("DTB: discovery FAILED.\n");
         for (;;) __asm__ volatile("wfi");
