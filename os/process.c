@@ -3,6 +3,8 @@
 #include "pmm.h"
 #include "sched.h"
 
+void sched_test_start(void);
+
 #define USER_TEXT_VA  0x81000000ULL
 #define USER_STACK_VA 0x82000000ULL
 #define PAGE_SIZE     0x1000ULL
