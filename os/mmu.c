@@ -71,7 +71,7 @@ uintptr_t vm_create_address_space(void) {
         return 0;
     }
     uint64_t *user_l3 = (uint64_t *)user_l3_pa;
-    for (uint32_t i = 0; i < 512; ++i) user_l3[i] = l3_vm[i];
+    vm_zero_page(user_l3_pa);
     user_l2[0] = (uint64_t)user_l3_pa | DESC_TABLE;
     root[2] = (uint64_t)user_l2_pa | DESC_TABLE;
     return root_pa;
