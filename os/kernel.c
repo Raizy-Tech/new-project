@@ -169,13 +169,13 @@ void kernel_main(uintptr_t dtb_address) {
             uart_puts("Heap: reclaim test FAILED.\n");
     }
 
-    process_init();
-    uart_puts("Milestone 9: user process + syscall boundary...\n");
-    process_start_user();
-
     uart_puts("Milestone 8: kernel scheduler...\n");
     sched_init();
     sched_test_start();
+
+    process_init();
+    uart_puts("Milestone 9: user process + syscall boundary...\n");
+    process_start_user();
 
     for (;;) __asm__ volatile("wfi");
 }
