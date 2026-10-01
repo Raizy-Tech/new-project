@@ -76,6 +76,21 @@ int vm_unmap_page(uintptr_t va) {
     if (!(l3[l3i] & DESC_PAGE)) return 0;
     l3[l3i] = 0;
     vm_tlb_flush(va);
+
+    /* Reclaim dynamically allocated empty L3 tables. */
+    if (l3 != l3_vm) {
+        uint32_t empty = 1;
+        for (uint32_t i = 0; i < 512; ++i) {
+            if (l3[i] & DESC_PAGE) {
+                empty = 0;
+                break;
+            }
+        }
+        if (empty) {
+            l2[l2i] = 0;
+            pmm_free_page((uintptr_t)l3);
+        }
+    }
     return 1;
 }
 
