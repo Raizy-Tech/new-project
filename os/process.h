@@ -17,8 +17,9 @@ struct process {
     uintptr_t page_table;
     uintptr_t user_text;
     uintptr_t user_stack;
-    uintptr_t code_pa;
     uintptr_t stack_pa;
+    uintptr_t user_pages[64];
+    uint32_t user_page_count;
     uint64_t syscalls;
 };
 
