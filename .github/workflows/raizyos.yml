@@ -61,6 +61,7 @@ jobs:
           grep -q "\[SYSCALL\] exit requested." /tmp/raizyos-qemu.log
           grep -q "Scheduler: cooperative + timer preemption PASSED." /tmp/raizyos-qemu.log
           grep -q "Milestone 10: console + RAM filesystem + shell..." /tmp/raizyos-qemu.log
-          grep -q "RAMFS: read-only filesystem ONLINE." /tmp/raizyos-qemu.log
+          grep -q "RAMFS: read-only bootstrap files ONLINE." /tmp/raizyos-qemu.log
+          grep -q "RAMFS: writable create/write/remove test PASSED." /tmp/raizyos-qemu.log
           grep -q "Shell: command parser test PASSED." /tmp/raizyos-qemu.log
           grep -q "Shell: ls/cat/echo command paths PASSED." /tmp/raizyos-qemu.log
