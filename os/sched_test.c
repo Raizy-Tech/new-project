@@ -5,6 +5,7 @@ void uart_puts_public(const char *);
 
 static volatile uint64_t thread1_count;
 static volatile uint64_t thread2_count;
+static volatile uint32_t scheduler_reported;
 
 static void burn(uint64_t n) {
     volatile uint64_t x = 0;
@@ -20,6 +21,11 @@ static void thread1(void) {
         burn(200000);
         if ((thread1_count % 1000) == 0)
             uart_puts_public("[SCHED] thread 1 running\n");
+        if (!scheduler_reported && thread1_count >= 20 && thread2_count >= 20 && sched_preempt_switches() > 0) {
+            scheduler_reported = 1;
+            uart_puts_public("Scheduler: cooperative + timer preemption PASSED.\n");
+            uart_puts_public("Scheduler: kernel threads ONLINE.\n");
+        }
         sched_yield();
     }
 }
@@ -30,6 +36,11 @@ static void thread2(void) {
         burn(200000);
         if ((thread2_count % 1000) == 0)
             uart_puts_public("[SCHED] thread 2 running\n");
+        if (!scheduler_reported && thread1_count >= 20 && thread2_count >= 20 && sched_preempt_switches() > 0) {
+            scheduler_reported = 1;
+            uart_puts_public("Scheduler: cooperative + timer preemption PASSED.\n");
+            uart_puts_public("Scheduler: kernel threads ONLINE.\n");
+        }
         sched_yield();
     }
 }
