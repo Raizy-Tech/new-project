@@ -83,15 +83,23 @@ static int track_page(uintptr_t pa) {
 static int load_elf(uintptr_t root, const uint8_t *image, uint64_t size, uintptr_t *entry_out) {
     if (size < sizeof(struct elf64_ehdr)) return 0;
     const struct elf64_ehdr *eh = (const struct elf64_ehdr *)image;
-    if (eh->ident[0] != 0x7f || eh->ident[1] != 'E' || eh->ident[2] != 'L' || eh->ident[3] != 'F')
+    uart_puts_public("[ELF] image size = "); uart_hex64(image_size); uart_puts_public("\n");
+    if (eh->ident[0] != 0x7f || eh->ident[1] != 'E' || eh->ident[2] != 'L' || eh->ident[3] != 'F') {
+        uart_puts_public("[ELF] bad magic.\n");
         return 0;
-    if (eh->ident[4] != 2 || eh->ident[5] != 1 || eh->type != ET_EXEC || eh->machine != EM_AARCH64)
+    }
+    uart_puts_public("[ELF] type = "); uart_hex64(eh->type); uart_puts_public(" machine = "); uart_hex64(eh->machine); uart_puts_public("\n");
+    uart_puts_public("[ELF] phoff = "); uart_hex64(eh->phoff); uart_puts_public(" phentsize = "); uart_hex64(eh->phentsize); uart_puts_public(" phnum = "); uart_hex64(eh->phnum); uart_puts_public("\n");
+    if (eh->ident[4] != 2 || eh->ident[5] != 1 || eh->type != ET_EXEC || eh->machine != EM_AARCH64) {
+        uart_puts_public("[ELF] header compatibility FAILED.\n");
         return 0;
+    }
     if (eh->phentsize != sizeof(struct elf64_phdr) || !eh->phnum) return 0;
     if (eh->phoff > size || eh->phnum > (size - eh->phoff) / eh->phentsize) return 0;
 
     for (uint16_t i = 0; i < eh->phnum; ++i) {
         const struct elf64_phdr *ph = (const struct elf64_phdr *)(image + eh->phoff + (uint64_t)i * eh->phentsize);
+        uart_puts_public("[ELF] segment type = "); uart_hex64(ph->type); uart_puts_public(" vaddr = "); uart_hex64(ph->vaddr); uart_puts_public(" filesz = "); uart_hex64(ph->filesz); uart_puts_public(" memsz = "); uart_hex64(ph->memsz); uart_puts_public("\n");
         if (ph->type != PT_LOAD || !ph->memsz) continue;
         if (ph->filesz > ph->memsz || ph->offset > size || ph->filesz > size - ph->offset) return 0;
         if (ph->vaddr < 0x80000000ULL || ph->vaddr + ph->memsz < ph->vaddr ||
