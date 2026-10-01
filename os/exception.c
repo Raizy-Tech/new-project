@@ -46,7 +46,7 @@ struct irq_frame *exception_sync_handler(struct irq_frame *frame) {
     uart_puts("  ESR_EL1 = "); uart_hex64(esr); uart_puts("\n");
     uart_puts("  ELR_EL1 = "); uart_hex64(frame->elr); uart_puts("\n");
     uart_puts("  SPSR_EL1 = "); uart_hex64(frame->spsr); uart_puts("\n");
-    uart_puts("  FAR_EL1 = "); uart_hex64(0); uart_puts("\n");
+    uart_puts("  FAR_EL1 = "); uart_hex64(far); uart_puts("\n");
     uart_puts("  EC = "); uart_hex64(ec); uart_puts("\n");
     uart_puts("  Cause: unclassified synchronous exception.\n");
     return frame;
