@@ -44,8 +44,8 @@ void sched_test_start(void) {
     sched_yield();
 
     for (;;) {
-        if (thread1_count >= 20 && thread2_count >= 20) {
-            uart_puts_public("Scheduler: cooperative kernel threads PASSED.\n");
+        if (thread1_count >= 20 && thread2_count >= 20 && sched_preempt_switches() > 0) {
+            uart_puts_public("Scheduler: cooperative + timer preemption PASSED.\n");
             uart_puts_public("Scheduler: kernel threads ONLINE.\n");
             for (;;) __asm__ volatile("wfi");
         }
