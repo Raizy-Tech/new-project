@@ -29,7 +29,7 @@ jobs:
         run: |
           set +e
           qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off,dumpdtb=/tmp/virt.dtb -cpu cortex-a53 -m 128M -display none -monitor none -serial none >/dev/null 2>&1 || true
-          timeout 5s qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf -device loader,file=/tmp/virt.dtb,addr=0x40000000 > /tmp/raizyos-qemu.log 2>&1
+          timeout 5s qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf -dtb /tmp/virt.dtb > /tmp/raizyos-qemu.log 2>&1
           status=$?
           cat /tmp/raizyos-qemu.log
           if [ "$status" -ne 124 ] && [ "$status" -ne 137 ]; then
