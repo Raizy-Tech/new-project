@@ -6,7 +6,9 @@
 
 void exception_vectors(void);
 void mmu_init(void);
-void mmu_test(void);\nint vm_map_page(uintptr_t va, uintptr_t pa);\nint vm_unmap_page(uintptr_t va);
+void mmu_test(void);
+int vm_map_page(uintptr_t va, uintptr_t pa);
+int vm_unmap_page(uintptr_t va);
 
 static uintptr_t find_dtb(void) {
     const uint32_t magic = 0xedfe0dd0U;
