@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include "gic.h"
 #include "timer.h"
+#include "sched.h"
 
 static volatile uint32_t *const UARTDR = (volatile uint32_t *)0x09000000UL;
 static volatile uint32_t *const UARTFR = (volatile uint32_t *)0x09000018UL;
@@ -37,7 +38,7 @@ void exception_sync_handler(uint64_t esr, uint64_t elr, uint64_t spsr, uint64_t 
     else uart_puts("  Cause: unclassified synchronous exception.\n");
 }
 
-void exception_irq_handler(void) {
+struct irq_frame *exception_irq_handler(struct irq_frame *frame) {
     uint32_t intid = 0;
     gic_ack(&intid);
 
@@ -57,6 +58,10 @@ void exception_irq_handler(void) {
 
     if (intid < 1020)
         gic_eoi(intid);
+
+    if (intid == 30)
+        return sched_preempt(frame);
+    return frame;
 }
 
 void exception_unhandled_handler(void) {
