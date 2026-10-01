@@ -31,7 +31,9 @@ static void uart_hex64(uint64_t v) {
 
 struct irq_frame *exception_sync_handler(struct irq_frame *frame) {
     uint64_t esr;
+    uint64_t far;
     __asm__ volatile("mrs %0, esr_el1" : "=r"(esr));
+    __asm__ volatile("mrs %0, far_el1" : "=r"(far));
     uint32_t ec = (uint32_t)(esr >> 26);
 
     if (ec == 0x15) {
