@@ -53,6 +53,10 @@ jobs:
           grep -q "DTB: GICR base = 0x00000000080a0000" /tmp/raizyos-qemu.log
           grep -q "DTB: timer PPI = 0x000000000000001e" /tmp/raizyos-qemu.log
           grep -q "Milestone 9: user process + syscall boundary..." /tmp/raizyos-qemu.log
-          grep -q "\[SYSCALL\] user SVC #1 handled." /tmp/raizyos-qemu.log
-          grep -q "\[PROCESS\] user process exit -> EL1." /tmp/raizyos-qemu.log
+          grep -q "\[PROCESS\] ELF load PASSED." /tmp/raizyos-qemu.log
+          grep -q "\[PROCESS\] entering EL0." /tmp/raizyos-qemu.log
+          grep -q "\[SYSCALL\] write handled." /tmp/raizyos-qemu.log
+          grep -q "\[SYSCALL\] getpid handled." /tmp/raizyos-qemu.log
+          grep -q "\[SYSCALL\] yield handled (non-blocking)." /tmp/raizyos-qemu.log
+          grep -q "\[SYSCALL\] exit requested." /tmp/raizyos-qemu.log
           grep -q "Scheduler: cooperative + timer preemption PASSED." /tmp/raizyos-qemu.log
