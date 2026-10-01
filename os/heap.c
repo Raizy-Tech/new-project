@@ -75,13 +75,13 @@ void kfree(void *ptr) {
 
     for (uint32_t slot = 0; slot < MAX_ALLOCS; ++slot) {
         if (!allocs[slot].used || allocs[slot].va != va) continue;
+        *(volatile uint64_t *)va = 0;
         for (uint32_t i = 0; i < allocs[slot].pages; ++i) {
             uintptr_t page_va = va + (uintptr_t)i * PAGE_SIZE;
             uintptr_t pa = vm_get_pa(page_va);
             vm_unmap_page(page_va);
             if (pa) pmm_free_page(pa);
         }
-        *(volatile uint64_t *)va = 0;
         allocs[slot].used = 0;
         return;
     }
