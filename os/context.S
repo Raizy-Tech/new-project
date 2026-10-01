@@ -12,7 +12,8 @@ context_switch:
     mov x2, sp
     str x2, [x0, #96]
 
-    ldr sp, [x1, #96]
+    ldr x2, [x1, #96]
+    mov sp, x2
     ldp x19, x20, [x1, #0]
     ldp x21, x22, [x1, #16]
     ldp x23, x24, [x1, #32]
