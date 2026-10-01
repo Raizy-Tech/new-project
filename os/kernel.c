@@ -106,7 +106,8 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("MMU: kernel execution continues after translation.\n");
 
     uart_puts("Milestone 6: physical memory manager...\n");
-    pmm_init();
+    uart_puts("PMM: using DTB-discovered RAM.\n");
+    pmm_init(dtb.ram_base, dtb.ram_size);
     pmm_test();
 
     for (;;) __asm__ volatile("wfi");
