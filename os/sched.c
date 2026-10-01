@@ -34,8 +34,35 @@ static uint32_t current;
 static uint64_t next_id = 1;
 static uint64_t switch_count;
 
-extern void context_switch(struct context *old, struct context *next);
-extern void thread_trampoline(void);
+__attribute__((naked)) static void context_switch(struct context *old, struct context *next) {
+    __asm__(
+        "stp x19, x20, [x0, #0]\n"
+        "stp x21, x22, [x0, #16]\n"
+        "stp x23, x24, [x0, #32]\n"
+        "stp x25, x26, [x0, #48]\n"
+        "stp x27, x28, [x0, #64]\n"
+        "stp x29, x30, [x0, #80]\n"
+        "mov x2, sp\n"
+        "str x2, [x0, #96]\n"
+        "ldr sp, [x1, #96]\n"
+        "ldp x19, x20, [x1, #0]\n"
+        "ldp x21, x22, [x1, #16]\n"
+        "ldp x23, x24, [x1, #32]\n"
+        "ldp x25, x26, [x1, #48]\n"
+        "ldp x27, x28, [x1, #64]\n"
+        "ldp x29, x30, [x1, #80]\n"
+        "ret\n"
+    );
+}
+
+__attribute__((naked)) static void thread_trampoline(void) {
+    __asm__(
+        "mov x0, x19\n"
+        "blr x0\n"
+        "1: wfe\n"
+        "b 1b\n"
+    );
+}
 
 static void interrupts_disable(void) {
     __asm__ volatile("msr daifset, #2" ::: "memory");
