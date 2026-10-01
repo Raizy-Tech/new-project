@@ -1,6 +1,7 @@
 #include <stdint.h>
 
 #define DESC_BLOCK 0x1ULL
+#define DESC_PAGE 0x3ULL
 #define DESC_TABLE 0x3ULL
 #define DESC_AF (1ULL << 10)
 #define DESC_SH_INNER (3ULL << 8)
@@ -12,6 +13,8 @@
 __attribute__((aligned(4096))) static uint64_t l1_table[512];
 __attribute__((aligned(4096))) static uint64_t l2_low[512];
 __attribute__((aligned(4096))) static uint64_t l2_ram[512];
+__attribute__((aligned(4096))) static uint64_t l2_vm[512];
+__attribute__((aligned(4096))) static uint64_t l3_vm[512];
 
 void uart_puts_public(const char *);
 
@@ -45,6 +48,13 @@ void mmu_init(void) {
     }
     l1_table[1] = ((uint64_t)l2_ram) | DESC_TABLE;
 
+    /* VA 0x80000000 -> L2 table -> L3 page table for a 4 KiB mapping. */
+    for (uint32_t i = 0; i < 512; ++i) { l2_vm[i] = 0; l3_vm[i] = 0; }
+    l1_table[2] = ((uint64_t)l2_vm) | DESC_TABLE;
+    l2_vm[0] = ((uint64_t)l3_vm) | DESC_TABLE;
+    l3_vm[0] = 0x40300000ULL | DESC_PAGE | DESC_AF | DESC_AP_RW_EL1 |
+               DESC_ATTRINDX(0) | DESC_SH_INNER;
+
     uint64_t mair = 0x04ULL << 8 | 0xffULL;
     uint64_t tcr = 32ULL | (1ULL << 8) | (1ULL << 10) |
                    (3ULL << 12) | (5ULL << 32);
@@ -66,4 +76,9 @@ void mmu_test(void) {
     *ram = pattern;
     if (*ram == pattern)
         uart_puts_public("MMU: identity-mapped RAM read/write test PASSED.\n");
+
+    volatile uint64_t *mapped = (volatile uint64_t *)0x80000000ULL;
+    *mapped = 0x5241495a594f564dULL;
+    if (*mapped == 0x5241495a594f564dULL)
+        uart_puts_public("VM: 4 KiB page mapping read/write test PASSED.\n");
 }
