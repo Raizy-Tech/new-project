@@ -17,5 +17,6 @@ void sched_yield(void);
 struct irq_frame *sched_preempt(struct irq_frame *frame);
 uint64_t sched_current_id(void);
 uint64_t sched_switches(void);
+uint64_t sched_preempt_switches(void);
 
 #endif
