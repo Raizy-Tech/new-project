@@ -38,7 +38,7 @@ jobs:
           grep -q "Kernel booted successfully." /tmp/raizyos-qemu.log
           grep -q "Cause: SVC instruction from AArch64." /tmp/raizyos-qemu.log
           grep -q "SVC returned successfully." /tmp/raizyos-qemu.log
-          grep -q "Milestone 4: waiting for real timer IRQs..." /tmp/raizyos-qemu.log
+          grep -q "Milestone 4: timer IRQs ONLINE" /tmp/raizyos-qemu.log
           grep -q "\[TIMER\] tick 0x000000000000000a" /tmp/raizyos-qemu.log
           grep -q "\[TIMER\] tick 0x0000000000000014" /tmp/raizyos-qemu.log
           grep -q "Milestone 6: physical memory manager..." /tmp/raizyos-qemu.log
