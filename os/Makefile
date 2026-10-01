@@ -43,7 +43,7 @@ $(BUILD)/user.elf: $(BUILD)/user.o user.ld
 $(BUILD)/user.bin: $(BUILD)/user.elf
 	$(CROSS)objcopy -O binary $< $@
 
-$(BUILD)/user_blob.o: $(BUILD)/user.bin
+$(BUILD)/user_blob.o: $(BUILD)/user.elf
 	$(LD) -r -b binary -o $@ $<
 $(BUILD)/dtb.o: dtb.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
