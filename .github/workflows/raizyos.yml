@@ -55,4 +55,4 @@ jobs:
           grep -q "Milestone 9: user process + syscall boundary..." /tmp/raizyos-qemu.log
           grep -q "\[SYSCALL\] user SVC #1 handled." /tmp/raizyos-qemu.log
           grep -q "\[PROCESS\] user process exit -> EL1." /tmp/raizyos-qemu.log
-          grep -q "Scheduler: cooperative + timer preemption PASSED." /tmp/raizyos-qemu.log
+          grep -q "Scheduler: cooperative kernel threads PASSED." /tmp/raizyos-qemu.log
