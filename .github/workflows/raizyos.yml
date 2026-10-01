@@ -1,4 +1,5 @@
 name: RaizyOS ARM64
+
 on:
   push:
     paths:
@@ -8,6 +9,7 @@ on:
     paths:
       - 'os/**'
       - '.github/workflows/raizyos.yml'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -26,7 +28,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          timeout 8s qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
+          timeout 8s qemu-system-aarch64 -M virt -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
           status=$?
           cat /tmp/raizyos-qemu.log
           if [ "$status" -ne 124 ] && [ "$status" -ne 137 ]; then
@@ -34,6 +36,8 @@ jobs:
             exit 1
           fi
           grep -q "Kernel booted successfully." /tmp/raizyos-qemu.log
+          grep -q "Milestone 2: exception vectors ONLINE" /tmp/raizyos-qemu.log
+          grep -q "Cause: SVC instruction from AArch64." /tmp/raizyos-qemu.log
           grep -q "SVC returned successfully." /tmp/raizyos-qemu.log
-          grep -q "Milestone 3: TIMER INTERRUPTS ONLINE" /tmp/raizyos-qemu.log
-          grep -q "\[TIMER\] 10 ticks" /tmp/raizyos-qemu.log
+          grep -q "Milestone 3: generic timer initialization" /tmp/raizyos-qemu.log
+          grep -q "Timer: ARM generic timer configured for 100 ms." /tmp/raizyos-qemu.log
