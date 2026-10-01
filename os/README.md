@@ -4,14 +4,17 @@ Personal ARM64 operating-system project.
 
 Target: AArch64 on QEMU virt. Language: C + AArch64 assembly.
 
-Current tested milestones:
+Current milestones:
 1. Direct ARM64 kernel boot with QEMU PL011 UART console.
-2. Exception vectors through VBAR_EL1, synchronous exception handling, and SVC #0.
-3. GICv3 Group-1 interrupt setup and ARM generic physical timer interrupts (PPI 30).
+2. Exception vector table installed through VBAR_EL1, with synchronous-exception diagnostics and an SVC #0 test.
+3. ARM generic timer initialized through CNTFRQ_EL0/CNTP_TVAL_EL1/CNTP_CTL_EL0.
 
-The CI workflow builds the cross-compiled kernel and boots it under QEMU, checking the UART console for the kernel, exception, and timer milestones.
+Build with an AArch64 bare-metal GCC toolchain and QEMU:
+
+    make
+    make run
 
 Roadmap:
-boot -> exceptions -> timer/GIC -> MMU -> physical memory allocator -> virtual memory -> scheduler -> processes -> syscalls -> drivers -> filesystem -> networking -> userland -> optional AI service.
+boot -> exceptions -> generic timer -> GIC -> timer IRQ -> MMU -> physical memory allocator -> virtual memory -> scheduler -> processes -> syscalls -> drivers -> filesystem -> networking -> userland -> optional AI service.
 
-The AI subsystem remains outside the kernel. The `awesome-free-llm-apis` resources can later support an optional user-space AI service without making the kernel dependent on Internet access or API keys.
+The AI subsystem will remain outside the kernel so the OS remains usable without Internet access or an LLM provider. The `awesome-free-llm-apis` project can later be used by an optional user-space AI client/service; API keys must remain outside the kernel and out of source control.
