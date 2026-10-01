@@ -2,6 +2,7 @@
 #include "gic.h"
 #include "timer.h"
 #include "pmm.h"
+#include "dtb.h"
 
 void exception_vectors(void);
 void mmu_init(void);
@@ -69,7 +70,7 @@ static void pmm_test(void) {
     uart_puts("PMM: page read/write + reclaim test PASSED.\n");
     uart_puts("PMM: free pages = "); uart_puthex(before); uart_puts("\n");
 }
-void kernel_main(void) {
+void kernel_main(uintptr_t dtb_address) {
     uart_puts("\n========================================\n");
     uart_puts("              RaizyOS ARM64             \n");
     uart_puts("========================================\n");
