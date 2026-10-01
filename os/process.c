@@ -14,6 +14,8 @@ int vm_map_user_page(uintptr_t va, uintptr_t pa, int writable, int executable);
 
 static uint64_t syscall_count;
 
+void sched_test_start(void);
+
 uint64_t process_syscalls(void) {
     return syscall_count;
 }
@@ -58,4 +60,9 @@ void process_syscall(uint64_t nr, uint64_t arg0) {
         ++syscall_count;
         (void)arg0;
     }
+}
+
+void process_user_return(void) {
+    sched_test_start();
+    for (;;) __asm__ volatile("wfi");
 }
