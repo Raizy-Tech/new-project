@@ -87,7 +87,13 @@ async function ask(message){
     addMessage(data.answer,'assistant');
   }catch(error){
     thinking.remove();
-    addMessage(error.message||'The assistant is temporarily unavailable. Please use WhatsApp.','assistant');
+    const q=message.toLowerCase();
+    let fallback='I can help with SM Tailoring services, blouse stitching, alterations, fitting and embroidery. For exact pricing or availability, please continue on WhatsApp.';
+    if(q.includes('service')) fallback='SM Tailoring offers custom blouse stitching, blouse alterations, women\'s tailoring, dress stitching, embroidery and custom fitting.';
+    else if(q.includes('measure')) fallback='For a blouse, measurements commonly include bust, shoulder, armhole, sleeve length, blouse length and the neckline/depth you want. Final measurements should be confirmed with the tailor.';
+    else if(q.includes('alter')) fallback='Yes. SM Tailoring handles blouse alterations and fitting adjustments. Share a photo or describe the fit issue on WhatsApp for specific guidance.';
+    else if(q.includes('contact')||q.includes('phone')||q.includes('whatsapp')) fallback='You can contact Sivamma at +91 91777 87592 on WhatsApp or call the same number.';
+    addMessage(fallback,'assistant');
   }finally{
     input.disabled=false;
     form.querySelector('button').disabled=false;
