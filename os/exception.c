@@ -38,8 +38,10 @@ struct irq_frame *exception_sync_handler(struct irq_frame *frame) {
         uint64_t nr = esr & 0xffffULL;
         if (nr == 0x1 && frame->spsr == 0) {
             process_syscall(nr, frame->x[0]);
+            uart_puts("[SYSCALL] user SVC #1 handled.\\n");
             frame->x[0] = 0x5241495a594f4b31ULL;
         } else if (nr == 0x2 && frame->spsr == 0) {
+            uart_puts("[PROCESS] user process exit -> EL1.\\n");
             frame->elr = (uint64_t)process_user_return;
             frame->spsr = 0x5ULL;
         } else {
