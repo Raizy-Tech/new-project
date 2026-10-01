@@ -47,7 +47,18 @@ uintptr_t vm_create_address_space(void) {
     if (!root_pa) return 0;
     vm_zero_page(root_pa);
     uint64_t *root = (uint64_t *)root_pa;
-    for (uint32_t i = 0; i < 512; ++i) root[i] = l1_table[i];
+    root[0] = l1_table[0];
+    root[1] = l1_table[1];
+
+    /* Keep the kernel's existing VM window, but give the process its own L2. */
+    uintptr_t user_l2_pa = pmm_alloc_page();
+    if (!user_l2_pa) {
+        pmm_free_page(root_pa);
+        return 0;
+    }
+    uint64_t *user_l2 = (uint64_t *)user_l2_pa;
+    for (uint32_t i = 0; i < 512; ++i) user_l2[i] = l2_vm[i];
+    root[2] = (uint64_t)user_l2_pa | DESC_TABLE;
     return root_pa;
 }
 
