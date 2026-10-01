@@ -27,6 +27,6 @@ void process_destroy(void);
 int process_start_user(void);
 uint64_t process_current_pid(void);
 uint64_t process_syscalls(void);
-void process_syscall_dispatch(struct irq_frame *frame);
+struct irq_frame *process_syscall_dispatch(struct irq_frame *frame);
 
 #endif
