@@ -12,15 +12,17 @@ void uart_set_base(uintptr_t base) {
     if (base) uart_base = base;
 }
 
-void uart_putc_public(char c) {
+void uart_putc(char c) {
     while (UARTFR & UARTFR_TXFF) {}
     UARTDR = (uint32_t)c;
 }
 
+void uart_putc_public(char c) { uart_putc(c); }
+
 void uart_puts_public(const char *s) {
     while (*s) {
-        if (*s == '\n') uart_putc_public('\r');
-        uart_putc_public(*s++);
+        if (*s == '\n') uart_putc('\r');
+        uart_putc(*s++);
     }
 }
 
