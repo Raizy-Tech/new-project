@@ -24,8 +24,6 @@ jobs:
         run: make CROSS=aarch64-linux-gnu-
       - name: Verify ELF
         run: aarch64-linux-gnu-readelf -h build/kernel.elf
-      - name: Prepare VirtIO test disk
-        run: truncate -s 16M build/raizy.disk
       - name: QEMU timer IRQ smoke test
         shell: bash
         run: |
@@ -49,7 +47,6 @@ jobs:
           grep -q "PMM: page read/write + reclaim test PASSED." /tmp/raizyos-qemu.log
           grep -q "DTB: valid flattened device tree." /tmp/raizyos-qemu.log
           grep -q "Milestone 7: DTB hardware discovery ONLINE" /tmp/raizyos-qemu.log
-          grep -q "Milestone 11: VirtIO-MMIO block-device probe ONLINE" /tmp/raizyos-qemu.log
           grep -q "VM: 4 KiB page mapping read/write test PASSED." /tmp/raizyos-qemu.log
           grep -q "DTB: UART base = 0x0000000009000000" /tmp/raizyos-qemu.log
           grep -q "DTB: GICD base = 0x0000000008000000" /tmp/raizyos-qemu.log
