@@ -7,6 +7,7 @@
 #include "sched.h"
 #include "process.h"
 #include "uart.h"
+#include "virtio_blk.h"
 
 void exception_vectors(void);
 void sched_test_start(void);
@@ -90,8 +91,8 @@ void kernel_main(uintptr_t dtb_address) {
     }
     dtb_print_info(&dtb);
     uart_puts("Milestone 7: DTB hardware discovery ONLINE\n");
-    if (dtb.virtio_base) {
-        uart_puts("Milestone 11: VirtIO-MMIO block-device discovery ONLINE\n");
+    if (dtb.virtio_base && virtio_blk_probe(dtb.virtio_base)) {
+        uart_puts("Milestone 11: VirtIO-MMIO block-device probe ONLINE\n");
     } else {
         uart_puts("VirtIO-MMIO: device not found.\n");
     }
