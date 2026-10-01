@@ -74,9 +74,27 @@ void process_destroy(void) {
     proc.syscalls = 0;
 }
 
-static int syscall_write_test(struct irq_frame *frame) {
+static int syscall_write(struct irq_frame *frame) {
     ++proc.syscalls;
-    frame->x[0] = 0x5241495a594f4b31ULL;
+    /*
+     * Temporary ABI implementation: x0 is the value supplied by userland.
+     * The console driver is intentionally kept out of the process layer.
+     * Return the number of bytes/value accepted until a real copy_from_user()
+     * path exists.
+     */
+    frame->x[0] = frame->x[0];
+    return 0;
+}
+
+static int syscall_getpid(struct irq_frame *frame) {
+    ++proc.syscalls;
+    frame->x[0] = proc.pid;
+    return 0;
+}
+
+static int syscall_yield(struct irq_frame *frame) {
+    ++proc.syscalls;
+    frame->x[0] = 0;
     return 0;
 }
 
@@ -89,13 +107,15 @@ static int syscall_exit(struct irq_frame *frame) {
 void process_syscall_dispatch(struct irq_frame *frame) {
     /*
      * AArch64 user ABI: x8 contains the syscall number, x0-x5 arguments.
-     * The initial RaizyOS ABI currently implements:
-     *   x8=1: test syscall, returns a fixed success token in x0
-     *   x8=2: process exit
+     * RaizyOS initial syscall ABI:
+     *   1 = write (temporary console/test ABI)
+     *   2 = exit
+     *   3 = getpid
+     *   4 = yield
      */
     switch (frame->x[8]) {
     case 1:
-        syscall_write_test(frame);
+        syscall_write(frame);
         break;
     case 2:
         if (syscall_exit(frame)) {
@@ -104,7 +124,14 @@ void process_syscall_dispatch(struct irq_frame *frame) {
             frame->spsr = 0x5ULL;
         }
         break;
+    case 3:
+        syscall_getpid(frame);
+        break;
+    case 4:
+        syscall_yield(frame);
+        break;
     default:
+        ++proc.syscalls;
         frame->x[0] = (uint64_t)-1;
         break;
     }
