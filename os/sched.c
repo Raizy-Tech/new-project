@@ -117,12 +117,6 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
     t->ctx.x24 = 0; t->ctx.x25 = 0; t->ctx.x26 = 0; t->ctx.x27 = 0;
     t->ctx.x28 = 0; t->ctx.x29 = 0; t->ctx.x30 = (uint64_t)thread_trampoline;
     t->ctx.sp = top;
-    if (!t->exception_stack) {
-        kfree(stack);
-        t->state = THREAD_UNUSED;
-        interrupts_restore();
-        return 0;
-    }
     t->page_table = vm_current_kernel_root();
     interrupts_restore();
     return (int)t->id;
