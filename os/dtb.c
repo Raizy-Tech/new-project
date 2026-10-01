@@ -11,6 +11,7 @@
 #define NODE_UART 2
 #define NODE_GIC 3
 #define NODE_TIMER 4
+#define NODE_VIRTIO 5
 struct fdt_header { uint32_t magic, totalsize, off_dt_struct, off_dt_strings, off_mem_rsvmap;
     uint32_t version, last_comp_version, boot_cpuid_phys, size_dt_strings, size_dt_struct; };
 static uint32_t be32(uint32_t x){return((x&0xff000000U)>>24)|((x&0x00ff0000U)>>8)|((x&0x0000ff00U)<<8)|((x&0x000000ffU)<<24);}
@@ -27,7 +28,7 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
     uint32_t total=be32(h->totalsize),so=be32(h->off_dt_struct),stro=be32(h->off_dt_strings),ss=be32(h->size_dt_struct),sts=be32(h->size_dt_strings);
     if(total<sizeof(*h)||so>=total||stro>=total||ss>total-so||sts>total-stro)return 0;
     const uint8_t*base=(const uint8_t*)a,*p=base+so,*end=p+ss,*strings=base+stro;
-    uint32_t ac=2,sc=1; int depth=-1,node=NODE_OTHER; uintptr_t rb=0,ub=0,gb=0,gr=0;uint32_t timer_ppi=0;uint64_t rs=0;int have_ram=0;
+    uint32_t ac=2,sc=1; int depth=-1,node=NODE_OTHER; uintptr_t rb=0,ub=0,gb=0,gr=0,vb=0;uint32_t timer_ppi=0;uint64_t rs=0;int have_ram=0;
     while(p<end){
         uint32_t tag=be32(*(const uint32_t*)p);p+=4;
         if(tag==FDT_BEGIN_NODE){
@@ -38,6 +39,7 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
                 else if(streq(n,"timer")) node=NODE_TIMER;
                 else if(n[0]=='p'&&n[1]=='l'&&n[2]=='0'&&n[3]=='1'&&n[4]=='1'&&n[5]=='@') node=NODE_UART;
                 else if((n[0]=='i'&&n[1]=='n'&&n[2]=='t'&&n[3]=='c'&&n[4]=='@') || streq(n,"intc")) node=NODE_GIC;
+                else if(n[0]=='v'&&n[1]=='i'&&n[2]=='r'&&n[3]=='t'&&n[4]=='i'&&n[5]=='o'&&n[6]=='_'&&n[7]=='m'&&n[8]=='m'&&n[9]=='i'&&n[10]=='o') node=NODE_VIRTIO;
             }
             continue;
         }
@@ -53,8 +55,11 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
                 if(compat_has(p,len,"arm,pl011"))node=NODE_UART;
                 else if(compat_has(p,len,"arm,gic-v3"))node=NODE_GIC;
                 else if(compat_has(p,len,"arm,armv8-timer"))node=NODE_TIMER;
+                else if(compat_has(p,len,"virtio,mmio"))node=NODE_VIRTIO;
             } else if(node==NODE_UART&&streq(name,"reg")&&(ac==2||ac==1)&&len>= (ac+1)*4){
                 ub=(uintptr_t)cells((const uint32_t*)p,ac);
+            } else if(node==NODE_VIRTIO&&streq(name,"reg")&&(ac==2||ac==1)&&sc>=1&&len>=(ac+sc)*4){
+                vb=(uintptr_t)cells((const uint32_t*)p,ac);
             } else if(node==NODE_GIC&&streq(name,"reg")&&(ac==2||ac==1)&&sc>=1&&len>=(ac+sc)*4){
                 const uint32_t*v=(const uint32_t*)p;gb=(uintptr_t)cells(v,ac);
                 if(len>=(ac+sc)*8)gr=(uintptr_t)cells(v+ac+sc,ac);
@@ -67,7 +72,7 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
         }
         if(tag==FDT_NOP)continue;if(tag==FDT_END)break;return 0;
     }
-    i->address=a;i->total_size=total;i->ram_base=rb;i->ram_size=rs;i->uart_base=ub;i->gicd_base=gb;i->gicr_base=gr;i->timer_ppi=timer_ppi;i->valid=have_ram&&ub&&gb&&gr&&timer_ppi;
+    i->address=a;i->total_size=total;i->ram_base=rb;i->ram_size=rs;i->uart_base=ub;i->gicd_base=gb;i->gicr_base=gr;i->timer_ppi=timer_ppi;i->virtio_base=vb;i->valid=have_ram&&ub&&gb&&gr&&timer_ppi;
     return i->valid;
 }
 static void print_hex(uint64_t v){extern void uart_putc(char);static const char h[]="0123456789abcdef";for(int i=15;i>=0;--i)uart_putc(h[(v>>(i*4))&15]);}
@@ -78,5 +83,6 @@ void dtb_print_info(const struct dtb_info*i){extern void uart_puts_public(const 
     uart_puts_public("\nDTB: UART base = 0x");print_hex(i->uart_base);
     uart_puts_public("\nDTB: GICD base = 0x");print_hex(i->gicd_base);
     uart_puts_public("\nDTB: GICR base = 0x");print_hex(i->gicr_base);
-    uart_puts_public("\nDTB: timer PPI = 0x");print_hex(i->timer_ppi);uart_puts_public("\n");
+    uart_puts_public("\nDTB: timer PPI = 0x");print_hex(i->timer_ppi);
+    uart_puts_public("\nDTB: VirtIO-MMIO base = 0x");print_hex(i->virtio_base);uart_puts_public("\n");
 }
