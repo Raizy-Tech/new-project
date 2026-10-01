@@ -13,23 +13,23 @@
 .balign 2048
 exception_vectors:
     vector_entry exception_sync_entry
-    vector_entry exception_unhandled
     vector_entry exception_irq_entry
+    vector_entry exception_unhandled
     vector_entry exception_unhandled
 
     vector_entry exception_sync_entry
-    vector_entry exception_unhandled
     vector_entry exception_irq_entry
+    vector_entry exception_unhandled
     vector_entry exception_unhandled
 
     vector_entry exception_sync_entry
-    vector_entry exception_unhandled
     vector_entry exception_irq_entry
+    vector_entry exception_unhandled
     vector_entry exception_unhandled
 
     vector_entry exception_sync_entry
-    vector_entry exception_unhandled
     vector_entry exception_irq_entry
+    vector_entry exception_unhandled
     vector_entry exception_unhandled
 
 exception_sync_entry:
