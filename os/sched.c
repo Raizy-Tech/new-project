@@ -27,8 +27,6 @@ struct thread {
     struct context ctx;
     void *stack;
     uint64_t stack_size;
-    void *kstack;
-    uint64_t kstack_size;
     struct irq_frame *frame;
     uintptr_t page_table;
 };
@@ -66,8 +64,6 @@ void sched_init(void) {
     threads[0].state = THREAD_RUNNING;
     threads[0].stack = 0;
     threads[0].stack_size = 0;
-    threads[0].kstack = 0;
-    threads[0].kstack_size = 0;
     threads[0].frame = 0;
     threads[0].page_table = vm_current_kernel_root();
     current = 0;
@@ -79,160 +75,7 @@ void sched_attach_current(uintptr_t page_table) {
     if (!page_table) page_table = vm_current_kernel_root();
     interrupts_disable();
 
-    if (!threads[0].kstack) {
-        threads[0].kstack_size = DEFAULT_STACK_SIZE;
-        threads[0].kstack = kmalloc(threads[0].kstack_size);
-    }
-
     threads[0].page_table = page_table;
-    if (threads[0].kstack)
-        set_exception_stack((uint8_t *)threads[0].kstack + threads[0].kstack_size);
-
     interrupts_restore();
 }
 
-void sched_set_current_address_space(uintptr_t page_table) {
-    if (!page_table) page_table = vm_current_kernel_root();
-    threads[current].page_table = page_table;
-}
-
-int sched_create(thread_entry_t entry, uint64_t stack_size) {
-    if (!entry) return 0;
-    if (!stack_size) stack_size = DEFAULT_STACK_SIZE;
-    stack_size = (stack_size + 0xfffULL) & ~0xfffULL;
-
-    interrupts_disable();
-
-    uint32_t slot;
-    for (slot = 1; slot < MAX_THREADS; ++slot)
-        if (threads[slot].state == THREAD_UNUSED) break;
-
-    if (slot == MAX_THREADS) {
-        interrupts_restore();
-        return 0;
-    }
-
-    void *stack = kmalloc(stack_size);
-    void *kstack = kmalloc(DEFAULT_STACK_SIZE);
-    if (!stack || !kstack) {
-        if (stack) kfree(stack);
-        if (kstack) kfree(kstack);
-        interrupts_restore();
-        return 0;
-    }
-
-    uintptr_t bottom = (uintptr_t)stack;
-    uintptr_t top = (bottom + stack_size) & ~0xfULL;
-    uintptr_t ktop = ((uintptr_t)kstack + DEFAULT_STACK_SIZE) & ~0xfULL;
-
-    struct thread *t = &threads[slot];
-    t->id = next_id++;
-    t->state = THREAD_READY;
-    t->stack = stack;
-    t->stack_size = stack_size;
-    t->kstack = kstack;
-    t->kstack_size = DEFAULT_STACK_SIZE;
-    t->frame = (struct irq_frame *)(ktop - sizeof(struct irq_frame));
-    for (uint32_t i = 0; i < 31; ++i) t->frame->x[i] = 0;
-    t->frame->x[30] = (uint64_t)thread_trampoline;
-    t->frame->elr = (uint64_t)entry;
-    t->frame->spsr = 0x5ULL;
-    t->frame->reserved = 0;
-    t->page_table = vm_current_kernel_root();
-
-    t->ctx.x19 = (uint64_t)entry;
-    t->ctx.x20 = 0;
-    t->ctx.x21 = 0;
-    t->ctx.x22 = 0;
-    t->ctx.x23 = 0;
-    t->ctx.x24 = 0;
-    t->ctx.x25 = 0;
-    t->ctx.x26 = 0;
-    t->ctx.x27 = 0;
-    t->ctx.x28 = 0;
-    t->ctx.x29 = 0;
-    t->ctx.x30 = (uint64_t)thread_trampoline;
-    t->ctx.sp = top;
-
-    interrupts_restore();
-    return (int)t->id;
-}
-
-static uint32_t next_ready(void) {
-    for (uint32_t step = 1; step < MAX_THREADS; ++step) {
-        uint32_t i = (current + step) % MAX_THREADS;
-        if (threads[i].state == THREAD_READY && threads[i].frame == 0)
-            return i;
-    }
-    return current;
-}
-
-void sched_yield(void) {
-    interrupts_disable();
-
-    uint32_t next = next_ready();
-    if (next == current) {
-        interrupts_restore();
-        return;
-    }
-
-    uint32_t old = current;
-    threads[old].frame = 0;
-    threads[old].state = THREAD_READY;
-    threads[next].state = THREAD_RUNNING;
-    current = next;
-    ++switch_count;
-
-    if (threads[next].page_table != threads[old].page_table)
-        vm_switch_address_space(threads[next].page_table);
-    if (threads[next].kstack)
-        set_exception_stack((uint8_t *)threads[next].kstack + threads[next].kstack_size);
-
-    interrupts_restore();
-    context_switch(&threads[old].ctx, &threads[next].ctx);
-}
-
-uint64_t sched_current_id(void) {
-    return threads[current].id;
-}
-
-uint64_t sched_switches(void) {
-    return switch_count;
-}
-
-uint64_t sched_preempt_switches(void) {
-    return preempt_switch_count;
-}
-
-struct irq_frame *sched_preempt(struct irq_frame *frame) {
-    if (!frame) return frame;
-
-    interrupts_disable();
-    threads[current].frame = frame;
-
-    for (uint32_t step = 1; step < MAX_THREADS; ++step) {
-        uint32_t i = (current + step) % MAX_THREADS;
-        if (threads[i].state == THREAD_READY && threads[i].frame) {
-            uint32_t old = current;
-            struct irq_frame *next_frame = threads[i].frame;
-
-            threads[old].state = THREAD_READY;
-            threads[i].state = THREAD_RUNNING;
-            threads[i].frame = 0;
-            current = i;
-            ++switch_count;
-            ++preempt_switch_count;
-
-            if (threads[i].page_table != threads[old].page_table)
-                vm_switch_address_space(threads[i].page_table);
-            if (threads[i].kstack)
-                set_exception_stack((uint8_t *)threads[i].kstack + threads[i].kstack_size);
-
-            interrupts_restore();
-            return next_frame;
-        }
-    }
-
-    interrupts_restore();
-    return frame;
-}
