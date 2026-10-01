@@ -16,10 +16,12 @@ static uintptr_t find_dtb(void) {
     return 0;
 }
 
-#define UART0_BASE 0x09000000UL
-#define UARTDR (*(volatile uint32_t *)(UART0_BASE + 0x00))
-#define UARTFR (*(volatile uint32_t *)(UART0_BASE + 0x18))
+static uintptr_t uart_base = 0x09000000UL;
+#define UARTDR (*(volatile uint32_t *)(uart_base + 0x00))
+#define UARTFR (*(volatile uint32_t *)(uart_base + 0x18))
 #define UARTFR_TXFF (1u << 5)
+
+void uart_set_base(uintptr_t base) { if (base) uart_base = base; }
 
 void uart_putc(char c) {
     while (UARTFR & UARTFR_TXFF) {}
@@ -102,7 +104,8 @@ void kernel_main(uintptr_t dtb_address) {
     __asm__ volatile("svc #0");
     uart_puts("SVC returned successfully.\n");
 
-    gic_init();
+    uart_set_base(dtb.uart_base);
+    gic_init(dtb.gicd_base, dtb.gicr_base);
     timer_init(0);
     uart_puts("Milestone 3: GICv3 + generic timer ONLINE\n");
     uart_puts("Milestone 4: timer IRQs ONLINE\n");
