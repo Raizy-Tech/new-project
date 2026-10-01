@@ -83,7 +83,7 @@ static int track_page(uintptr_t pa) {
 static int load_elf(uintptr_t root, const uint8_t *image, uint64_t size, uintptr_t *entry_out) {
     if (size < sizeof(struct elf64_ehdr)) return 0;
     const struct elf64_ehdr *eh = (const struct elf64_ehdr *)image;
-    uart_puts_public("[ELF] image size = "); uart_hex64(image_size); uart_puts_public("\n");
+    uart_puts_public("[ELF] image size = "); uart_hex64(size); uart_puts_public("\n");
     if (eh->ident[0] != 0x7f || eh->ident[1] != 'E' || eh->ident[2] != 'L' || eh->ident[3] != 'F') {
         uart_puts_public("[ELF] bad magic.\n");
         return 0;
