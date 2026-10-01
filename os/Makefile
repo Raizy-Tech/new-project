@@ -22,7 +22,7 @@ $(BUILD)/timer.o: timer.c | $(BUILD)
 $(BUILD)/kernel.elf: $(BUILD)/boot.o $(BUILD)/exceptions.o $(BUILD)/kernel.o $(BUILD)/exception.o $(BUILD)/gic.o $(BUILD)/timer.o linker.ld
 	$(LD) $(LDFLAGS) -o $@ $(BUILD)/boot.o $(BUILD)/exceptions.o $(BUILD)/kernel.o $(BUILD)/exception.o $(BUILD)/gic.o $(BUILD)/timer.o
 run: $(BUILD)/kernel.elf
-	qemu-system-aarch64 -M virt -cpu cortex-a53 -m 128M -nographic -kernel $(BUILD)/kernel.elf
+	qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -kernel $(BUILD)/kernel.elf
 clean:
 	rm -rf $(BUILD)
 .PHONY: all run clean
