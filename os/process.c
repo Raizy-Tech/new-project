@@ -40,6 +40,16 @@ static uint64_t next_pid = 1;
 
 void uart_puts_public(const char *);
 
+static void process_hex64(uint64_t v) {
+    static const char h[] = "0123456789abcdef";
+    char b[19];
+    b[0] = '0'; b[1] = 'x';
+    for (int i = 0; i < 16; ++i)
+        b[2 + i] = h[(v >> ((15 - i) * 4)) & 0xf];
+    b[18] = 0;
+    uart_puts_public(b);
+}
+
 static void user_code_sync(uintptr_t start, uint64_t size) {
     uintptr_t end = (start + size + 63ULL) & ~63ULL;
     for (uintptr_t p = start & ~63ULL; p < end; p += 64ULL)
@@ -83,7 +93,7 @@ static int track_page(uintptr_t pa) {
 static int load_elf(uintptr_t root, const uint8_t *image, uint64_t size, uintptr_t *entry_out) {
     if (size < sizeof(struct elf64_ehdr)) return 0;
     const struct elf64_ehdr *eh = (const struct elf64_ehdr *)image;
-    uart_puts_public("[ELF] image size = "); uart_hex64(size); uart_puts_public("\n");
+    uart_puts_public("[ELF] image size = "); process_hex64(size); uart_puts_public("\n");
     if (eh->ident[0] != 0x7f || eh->ident[1] != 'E' || eh->ident[2] != 'L' || eh->ident[3] != 'F') {
         uart_puts_public("[ELF] bad magic.\n");
         return 0;
