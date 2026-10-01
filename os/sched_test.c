@@ -6,9 +6,18 @@ void uart_puts_public(const char *);
 static volatile uint64_t thread1_count;
 static volatile uint64_t thread2_count;
 
+static void burn(uint64_t n) {
+    volatile uint64_t x = 0;
+    for (uint64_t i = 0; i < n; ++i)
+        x = (x << 1) ^ i;
+    (void)x;
+}
+
+
 static void thread1(void) {
     for (;;) {
         ++thread1_count;
+        burn(200000);
         if ((thread1_count % 1000) == 0)
             uart_puts_public("[SCHED] thread 1 running\n");
         sched_yield();
@@ -18,6 +27,7 @@ static void thread1(void) {
 static void thread2(void) {
     for (;;) {
         ++thread2_count;
+        burn(200000);
         if ((thread2_count % 1000) == 0)
             uart_puts_public("[SCHED] thread 2 running\n");
         sched_yield();
@@ -34,8 +44,8 @@ void sched_test_start(void) {
     sched_yield();
 
     for (;;) {
-        if (thread1_count >= 1000 && thread2_count >= 1000) {
-            uart_puts_public("Scheduler: round-robin context switching PASSED.\n");
+        if (thread1_count >= 20 && thread2_count >= 20 && sched_preempt_switches() > 0) {
+            uart_puts_public("Scheduler: cooperative + timer preemption PASSED.\n");
             uart_puts_public("Scheduler: kernel threads ONLINE.\n");
             for (;;) __asm__ volatile("wfi");
         }
