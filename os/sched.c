@@ -108,10 +108,9 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
     t->frame->x[19] = (uint64_t)entry;
     t->frame->x[30] = (uint64_t)thread_trampoline;
     t->frame->elr = (uint64_t)entry;
-    t->frame->spsr = 0x4ULL;
+    t->frame->spsr = 0x5ULL;
     t->frame->reserved = top;
     t->started = 0;
-    t->exception_stack = (uintptr_t)kmalloc(4096) + 4096ULL;
     t->ctx.x19 = (uint64_t)entry;
     t->ctx.x20 = 0; t->ctx.x21 = 0; t->ctx.x22 = 0; t->ctx.x23 = 0;
     t->ctx.x24 = 0; t->ctx.x25 = 0; t->ctx.x26 = 0; t->ctx.x27 = 0;
