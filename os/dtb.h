@@ -9,6 +9,7 @@ struct dtb_info {
     uintptr_t uart_base;
     uintptr_t gicd_base;
     uintptr_t gicr_base;
+    uint32_t timer_ppi;
     int valid;
 };
 int dtb_init(uintptr_t address, struct dtb_info *info);
