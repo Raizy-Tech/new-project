@@ -33,7 +33,7 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
         if(tag==FDT_BEGIN_NODE){
             const char*n=(const char*)p;uintptr_t q=(uintptr_t)p;while(q<(uintptr_t)end&&*(const char*)q)++q;
             p=(const uint8_t*)align4(q+1);++depth;node=NODE_OTHER;
-            if(depth==1){if(streq(n,"memory")||(n[0]=='m'&&n[1]=='e'&&n[2]=='m'&&n[3]=='o'&&n[4]=='r'&&n[5]=='y'&&n[6]=='@')){node=NODE_MEMORY;md=depth;}}
+            if(depth==1){if(streq(n,"memory")||(n[0]=='m'&&n[1]=='e'&&n[2]=='m'&&n[3]=='o'&&n[4]=='r'&&n[5]=='y'&&n[6]=='@')){node=NODE_MEMORY;}}
             continue;
         }
         if(tag==FDT_END_NODE){--depth;node=NODE_OTHER;continue;}
