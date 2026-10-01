@@ -20,7 +20,7 @@ $(BUILD)/gic.o: gic.c | $(BUILD)
 $(BUILD)/timer.o: timer.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 $(BUILD)/kernel.elf: $(BUILD)/boot.o $(BUILD)/exceptions.o $(BUILD)/kernel.o $(BUILD)/exception.o $(BUILD)/gic.o $(BUILD)/timer.o linker.ld
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/boot.o $(BUILD)/exceptions.o $(BUILD)/kernel.o $(BUILD)/exception.o $(BUILD)/gic.o $(BUILD)/timer.o
 run: $(BUILD)/kernel.elf
 	qemu-system-aarch64 -M virt -cpu cortex-a53 -m 128M -nographic -kernel $(BUILD)/kernel.elf
 clean:
