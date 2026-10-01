@@ -27,6 +27,7 @@ struct thread {
     struct context ctx;
     void *stack;
     uint64_t stack_size;
+    struct irq_frame *frame;
 };
 
 static struct thread threads[MAX_THREADS];
@@ -54,6 +55,7 @@ void sched_init(void) {
     threads[0].state = THREAD_RUNNING;
     threads[0].stack = 0;
     threads[0].stack_size = 0;
+    threads[0].frame = 0;
     current = 0;
     switch_count = 0;
 }
@@ -88,6 +90,7 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
     t->state = THREAD_READY;
     t->stack = stack;
     t->stack_size = stack_size;
+    t->frame = 0;
 
     t->ctx.x19 = (uint64_t)entry;
     t->ctx.x20 = 0;
@@ -126,6 +129,7 @@ void sched_yield(void) {
     }
 
     uint32_t old = current;
+    threads[old].frame = 0;
     threads[old].state = THREAD_READY;
     threads[next].state = THREAD_RUNNING;
     current = next;
@@ -141,4 +145,24 @@ uint64_t sched_current_id(void) {
 
 uint64_t sched_switches(void) {
     return switch_count;
+}
+
+struct irq_frame *sched_preempt(struct irq_frame *frame) {
+    if (!frame) return frame;
+
+    threads[current].frame = frame;
+
+    for (uint32_t step = 1; step < MAX_THREADS; ++step) {
+        uint32_t i = (current + step) % MAX_THREADS;
+        if (threads[i].state == THREAD_READY && threads[i].frame) {
+            uint32_t old = current;
+            threads[old].state = THREAD_READY;
+            threads[i].state = THREAD_RUNNING;
+            current = i;
+            ++switch_count;
+            return threads[i].frame;
+        }
+    }
+
+    return frame;
 }
