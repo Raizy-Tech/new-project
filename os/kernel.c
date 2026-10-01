@@ -6,7 +6,7 @@
 
 void exception_vectors(void);
 void mmu_init(void);
-void mmu_test(void);
+void mmu_test(void);\nint vm_map_page(uintptr_t va, uintptr_t pa);\nint vm_unmap_page(uintptr_t va);
 
 static uintptr_t find_dtb(void) {
     const uint32_t magic = 0xedfe0dd0U;
@@ -121,6 +121,27 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("PMM: using DTB-discovered RAM.\n");
     pmm_init(dtb.ram_base, dtb.ram_size);
     pmm_test();
+
+    uart_puts("VM: dynamic PMM-backed mapping test...\n");
+    uint64_t vm_before = pmm_free_count();
+    uintptr_t vm_page = pmm_alloc_page();
+    uintptr_t vm_va = 0x80400000ULL;
+    if (!vm_page || !vm_map_page(vm_va, vm_page)) {
+        uart_puts("VM: dynamic mapping FAILED.\n");
+    } else {
+        volatile uint64_t *vm_ptr = (volatile uint64_t *)vm_va;
+        *vm_ptr = 0x5241495a594f444dULL;
+        if (*vm_ptr == 0x5241495a594f444dULL &&
+            vm_unmap_page(vm_va)) {
+            pmm_free_page(vm_page);
+            if (pmm_free_count() == vm_before)
+                uart_puts("VM: dynamic PMM-backed mapping PASSED.\n");
+            else
+                uart_puts("VM: dynamic mapping reclaim FAILED.\n");
+        } else {
+            uart_puts("VM: dynamic mapping read/write FAILED.\n");
+        }
+    }
 
     for (;;) __asm__ volatile("wfi");
 }
