@@ -7,6 +7,9 @@
 #define DESC_AF (1ULL << 10)
 #define DESC_SH_INNER (3ULL << 8)
 #define DESC_AP_RW_EL1 (0ULL << 6)
+#define DESC_AP_RO_EL1 (2ULL << 6)
+#define DESC_AP_RW_EL0 (1ULL << 6)
+#define DESC_AP_RO_EL0 (3ULL << 6)
 #define DESC_ATTRINDX(n) ((uint64_t)(n) << 2)
 #define DESC_PXN (1ULL << 53)
 #define DESC_UXN (1ULL << 54)
@@ -22,6 +25,36 @@ void uart_puts_public(const char *);
 static void vm_tlb_flush(uintptr_t va) {
     uint64_t operand = (uint64_t)(va >> 12);
     __asm__ volatile("dsb ishst\ntlbi vae1is, %0\ndsb ish\nisb" :: "r"(operand) : "memory");
+}
+
+int vm_map_user_page(uintptr_t va, uintptr_t pa, int writable, int executable) {
+    if ((va & 0xfffULL) || (pa & 0xfffULL)) return 0;
+    if (va < 0x10000000ULL || va >= 0x80000000ULL) return 0;
+
+    uint32_t l1i = (uint32_t)((va >> 30) & 0x1ff);
+    uint32_t l2i = (uint32_t)((va >> 21) & 0x1ff);
+    uint32_t l3i = (uint32_t)((va >> 12) & 0x1ff);
+
+    if (!(l1_table[l1i] & DESC_TABLE)) return 0;
+    uint64_t *l2 = (uint64_t *)(uintptr_t)(l1_table[l1i] & ~0xfffULL);
+
+    if (!(l2[l2i] & DESC_TABLE)) {
+        uintptr_t page = pmm_alloc_page();
+        if (!page) return 0;
+        uint64_t *l3 = (uint64_t *)page;
+        for (uint32_t i = 0; i < 512; ++i) l3[i] = 0;
+        l2[l2i] = ((uint64_t)l3) | DESC_TABLE;
+    }
+
+    uint64_t *l3 = (uint64_t *)(uintptr_t)(l2[l2i] & ~0xfffULL);
+    uint64_t ap = writable ? DESC_AP_RW_EL0 : DESC_AP_RO_EL0;
+    uint64_t pxn = executable ? 0 : DESC_PXN;
+    l3[l3i] = (uint64_t)pa | DESC_PAGE | DESC_AF | ap |
+              DESC_ATTRINDX(0) | DESC_SH_INNER | pxn | DESC_UXN;
+    if (executable)
+        l3[l3i] &= ~DESC_UXN;
+    vm_tlb_flush(va);
+    return 1;
 }
 
 int vm_map_page(uintptr_t va, uintptr_t pa) {
