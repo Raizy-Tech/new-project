@@ -78,6 +78,14 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("Architecture: AArch64\n");
     uart_puts("Platform: QEMU virt / GICv3\n");
 
+    struct dtb_info dtb;
+    if (!dtb_init(dtb_address, &dtb)) {
+        uart_puts("DTB: discovery FAILED.\n");
+        for (;;) __asm__ volatile("wfi");
+    }
+    dtb_print_info(&dtb);
+    uart_puts("Milestone 7: DTB hardware discovery ONLINE\n");
+
     exception_init();
     uart_puts("Milestone 2: exception vectors ONLINE\n");
     uart_puts("Test: issuing SVC #0...\n");
