@@ -52,3 +52,7 @@ jobs:
           grep -q "DTB: GICD base = 0x0000000008000000" /tmp/raizyos-qemu.log
           grep -q "DTB: GICR base = 0x00000000080a0000" /tmp/raizyos-qemu.log
           grep -q "DTB: timer PPI = 0x000000000000001e" /tmp/raizyos-qemu.log
+          grep -q "Milestone 9: user process + syscall boundary..." /tmp/raizyos-qemu.log
+          grep -q "\[SYSCALL\] user SVC #1 handled." /tmp/raizyos-qemu.log
+          grep -q "\[PROCESS\] user process exit -> EL1." /tmp/raizyos-qemu.log
+          grep -q "Scheduler: cooperative + timer preemption PASSED." /tmp/raizyos-qemu.log
