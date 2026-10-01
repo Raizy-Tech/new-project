@@ -47,3 +47,6 @@ jobs:
           grep -q "PMM: page read/write + reclaim test PASSED." /tmp/raizyos-qemu.log
           grep -q "DTB: valid flattened device tree." /tmp/raizyos-qemu.log
           grep -q "Milestone 7: DTB hardware discovery ONLINE" /tmp/raizyos-qemu.log
+          grep -q "DTB: UART base = 0x0000000009000000" /tmp/raizyos-qemu.log
+          grep -q "DTB: GICD base = 0x0000000008000000" /tmp/raizyos-qemu.log
+          grep -q "DTB: GICR base = 0x00000000080a0000" /tmp/raizyos-qemu.log
