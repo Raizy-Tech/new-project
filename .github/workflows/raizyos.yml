@@ -39,5 +39,5 @@ jobs:
           grep -q "Cause: SVC instruction from AArch64." /tmp/raizyos-qemu.log
           grep -q "SVC returned successfully." /tmp/raizyos-qemu.log
           grep -q "Milestone 4: waiting for real timer IRQs..." /tmp/raizyos-qemu.log
-          grep -q "\[TIMER\] tick 10" /tmp/raizyos-qemu.log
-          grep -q "\[TIMER\] tick 20" /tmp/raizyos-qemu.log
+          grep -q "\[TIMER\] tick 0x000000000000000a" /tmp/raizyos-qemu.log
+          grep -q "\[TIMER\] tick 0x0000000000000014" /tmp/raizyos-qemu.log
