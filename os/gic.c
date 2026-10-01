@@ -1,8 +1,8 @@
 #include <stdint.h>
 #include "gic.h"
 
-#define GICD_BASE 0x08000000UL
-#define GICR_BASE 0x080A0000UL
+static uintptr_t gicd_base = 0x08000000UL;
+static uintptr_t gicr_base = 0x080A0000UL
 
 #define GICD_CTLR 0x0000
 #define GICR_WAKER 0x0014
@@ -24,8 +24,10 @@ static inline uint32_t mmio_read32(uintptr_t addr) {
     return *(volatile uint32_t *)addr;
 }
 
-void gic_init(void) {
-    uintptr_t r = GICR_BASE;
+void gic_init(uintptr_t distributor_base, uintptr_t redistributor_base) {
+    gicd_base = distributor_base;
+    gicr_base = redistributor_base;
+    uintptr_t r = gicr_base;
 
     uint32_t waker = mmio_read32(r + GICR_WAKER);
     waker &= ~GICR_WAKER_PROCESSOR_SLEEP;
@@ -44,7 +46,7 @@ void gic_init(void) {
     mmio_write32(r + GICR_ISENABLER0, 1u << TIMER_PPI);
 
     /* Enable Group 1 at the distributor. */
-    uint32_t ctlr = mmio_read32(GICD_BASE + GICD_CTLR);
+    uint32_t ctlr = mmio_read32(gicd_base + GICD_CTLR);
     ctlr |= GICD_CTLR_ENABLE_G1NS;
     mmio_write32(GICD_BASE + GICD_CTLR, ctlr);
 
@@ -61,7 +63,7 @@ void gic_init(void) {
 
 void gic_enable_ppi(uint32_t intid) {
     if (intid < 16 || intid > 31) return;
-    mmio_write32(GICR_BASE + GICR_ISENABLER0, 1u << intid);
+    mmio_write32(gicr_base + GICR_ISENABLER0, 1u << intid);
 }
 
 void gic_ack(uint32_t *intid) {
