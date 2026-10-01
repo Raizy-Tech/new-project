@@ -27,8 +27,8 @@ struct elf64_phdr {
     uint64_t offset, vaddr, paddr, filesz, memsz, align;
 };
 
-extern char _binary_build_user_bin_start[];
-extern char _binary_build_user_bin_end[];
+extern char _binary_build_user_elf_start[];
+extern char _binary_build_user_elf_end[];
 uintptr_t vm_create_address_space(void);
 void vm_destroy_address_space(uintptr_t root_pa);
 void vm_switch_address_space(uintptr_t root_pa);
@@ -190,8 +190,8 @@ struct irq_frame *process_syscall_dispatch(struct irq_frame *frame) {
 }
 
 int process_start_user(void) {
-    const uint8_t *image = (const uint8_t *)_binary_build_user_bin_start;
-    uint64_t image_size = (uint64_t)(_binary_build_user_bin_end - _binary_build_user_bin_start);
+    const uint8_t *image = (const uint8_t *)_binary_build_user_elf_start;
+    uint64_t image_size = (uint64_t)(_binary_build_user_elf_end - _binary_build_user_elf_start);
     uart_puts_public("[PROCESS] creating address space.\n");
     proc.page_table = vm_create_address_space();
     if (!proc.page_table) {
