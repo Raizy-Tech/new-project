@@ -107,16 +107,11 @@ int process_start_user(void) {
     uintptr_t user_sp = USER_STACK_VA + PAGE_SIZE;
 
     __asm__ volatile(
-        "msr sp_el0, %0
-"
-        "msr elr_el1, %1
-"
-        "msr spsr_el1, xzr
-"
-        "isb
-"
-        "eret
-"
+        "msr sp_el0, %0\n"
+        "msr elr_el1, %1\n"
+        "msr spsr_el1, xzr\n"
+        "isb\n"
+        "eret\n"
         :: "r"(user_sp), "r"(USER_TEXT_VA)
         : "memory");
 
