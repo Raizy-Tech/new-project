@@ -29,7 +29,7 @@ static void vm_tlb_flush(uintptr_t va) {
 
 int vm_map_user_page(uintptr_t va, uintptr_t pa, int writable, int executable) {
     if ((va & 0xfffULL) || (pa & 0xfffULL)) return 0;
-    if (va < 0x10000000ULL || va >= 0x80000000ULL) return 0;
+    if (va < 0x80000000ULL || va >= 0xc0000000ULL) return 0;
 
     uint32_t l1i = (uint32_t)((va >> 30) & 0x1ff);
     uint32_t l2i = (uint32_t)((va >> 21) & 0x1ff);
