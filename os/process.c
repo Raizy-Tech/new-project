@@ -3,8 +3,6 @@
 #include "pmm.h"
 #include "sched.h"
 
-void sched_test_start(void);
-
 #define USER_TEXT_VA  0x81000000ULL
 #define USER_STACK_VA 0x82000000ULL
 #define PAGE_SIZE     0x1000ULL
@@ -12,12 +10,11 @@ void sched_test_start(void);
 extern char user_program_start;
 extern char user_program_end;
 
-int vm_map_user_page(uintptr_t va, uintptr_t pa, int writable, int executable);
+int vm_map_user_page_in(uintptr_t root_pa, uintptr_t va, uintptr_t pa, int writable, int executable);
 uintptr_t vm_create_address_space(void);
 void vm_switch_address_space(uintptr_t root_pa);
 uintptr_t vm_current_kernel_root(void);
 void vm_destroy_address_space(uintptr_t root_pa);
-int vm_map_user_page_in(uintptr_t root_pa, uintptr_t va, uintptr_t pa, int writable, int executable);
 
 static struct process proc;
 static uint64_t next_pid = 1;
@@ -43,13 +40,8 @@ void process_init(void) {
     proc.syscalls = 0;
 }
 
-uint64_t process_current_pid(void) {
-    return proc.pid;
-}
-
-uint64_t process_syscalls(void) {
-    return proc.syscalls;
-}
+uint64_t process_current_pid(void) { return proc.pid; }
+uint64_t process_syscalls(void) { return proc.syscalls; }
 
 void process_destroy(void) {
     uintptr_t root = proc.page_table;
@@ -57,9 +49,9 @@ void process_destroy(void) {
     uintptr_t stack = proc.stack_pa;
 
     if (root) {
-        /* Never destroy the page table currently selected in TTBR0. */
         vm_switch_address_space(vm_current_kernel_root());
         vm_destroy_address_space(root);
+        sched_set_current_address_space(vm_current_kernel_root());
     }
     if (code) pmm_free_page(code);
     if (stack) pmm_free_page(stack);
@@ -74,73 +66,60 @@ void process_destroy(void) {
     proc.syscalls = 0;
 }
 
-static int syscall_write(struct irq_frame *frame) {
+static void syscall_write(struct irq_frame *frame) {
     ++proc.syscalls;
-    /*
-     * Temporary ABI implementation: x0 is the value supplied by userland.
-     * The console driver is intentionally kept out of the process layer.
-     * Return the number of bytes/value accepted until a real copy_from_user()
-     * path exists.
-     */
     frame->x[0] = frame->x[0];
-    return 0;
 }
 
-static int syscall_getpid(struct irq_frame *frame) {
+static void syscall_getpid(struct irq_frame *frame) {
     ++proc.syscalls;
     frame->x[0] = proc.pid;
-    return 0;
-}
-
-static int syscall_yield(struct irq_frame *frame) {
-    ++proc.syscalls;
-    frame->x[0] = 0;
-    return 0;
-}
-
-static int syscall_exit(struct irq_frame *frame) {
-    (void)frame;
-    proc.state = PROCESS_ZOMBIE;
-    return 1;
 }
 
 void process_syscall_dispatch(struct irq_frame *frame) {
-    /*
-     * AArch64 user ABI: x8 contains the syscall number, x0-x5 arguments.
-     * RaizyOS initial syscall ABI:
-     *   1 = write (temporary console/test ABI)
-     *   2 = exit
-     *   3 = getpid
-     *   4 = yield
-     */
     switch (frame->x[8]) {
     case 1:
         syscall_write(frame);
         break;
     case 2:
-        if (syscall_exit(frame)) {
-            extern void process_user_return(void);
-            frame->elr = (uint64_t)process_user_return;
-            frame->spsr = 0x5ULL;
-        }
+        ++proc.syscalls;
+        uart_puts_public("[SYSCALL] exit requested.\n");
+        process_destroy();
+        frame = sched_preempt(frame);
         break;
     case 3:
         syscall_getpid(frame);
+        uart_puts_public("[SYSCALL] getpid handled.\n");
         break;
     case 4:
-        syscall_yield(frame);
+        ++proc.syscalls;
+        frame->x[0] = 0;
+        uart_puts_public("[SYSCALL] yield handled.\n");
+        frame = sched_preempt(frame);
         break;
     default:
         ++proc.syscalls;
         frame->x[0] = (uint64_t)-1;
         break;
     }
+
+    /*
+     * The exception entry code consumes the returned frame pointer. The
+     * scheduler may replace it with another task's saved frame.
+     */
+    if (frame) {
+        __asm__ volatile("mov x19, %0" :: "r"(frame) : "x19");
+    }
 }
 
 int process_start_user(void) {
     uintptr_t code_pa = pmm_alloc_page();
     uintptr_t stack_pa = pmm_alloc_page();
-    if (!code_pa || !stack_pa) return 0;
+    if (!code_pa || !stack_pa) {
+        if (code_pa) pmm_free_page(code_pa);
+        if (stack_pa) pmm_free_page(stack_pa);
+        return 0;
+    }
 
     uint64_t code_size = (uint64_t)(&user_program_end - &user_program_start);
     if (code_size > PAGE_SIZE) {
@@ -183,9 +162,10 @@ int process_start_user(void) {
     proc.stack_pa = stack_pa;
     proc.syscalls = 0;
 
+    sched_attach_current(proc.page_table);
     vm_switch_address_space(proc.page_table);
-    uintptr_t user_sp = USER_STACK_VA + PAGE_SIZE;
 
+    uintptr_t user_sp = USER_STACK_VA + PAGE_SIZE;
     __asm__ volatile(
         "msr sp_el0, %0\n"
         "msr elr_el1, %1\n"
@@ -196,11 +176,4 @@ int process_start_user(void) {
         : "memory");
 
     __builtin_unreachable();
-}
-
-void process_user_return(void) {
-    proc.state = PROCESS_ZOMBIE;
-    process_destroy();
-    sched_test_start();
-    for (;;) __asm__ volatile("wfi");
 }
