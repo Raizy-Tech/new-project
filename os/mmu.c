@@ -57,7 +57,7 @@ uintptr_t vm_create_address_space(void) {
         return 0;
     }
     uint64_t *user_l2 = (uint64_t *)user_l2_pa;
-    vm_zero_page(user_l2);
+    vm_zero_page(user_l2_pa);
 
     /*
      * Copy the kernel's fixed VM-window mapping into private tables.
@@ -70,7 +70,6 @@ uintptr_t vm_create_address_space(void) {
         pmm_free_page(root_pa);
         return 0;
     }
-    uint64_t *user_l3 = (uint64_t *)user_l3_pa;
     vm_zero_page(user_l3_pa);
     user_l2[0] = (uint64_t)user_l3_pa | DESC_TABLE;
     root[2] = (uint64_t)user_l2_pa | DESC_TABLE;
