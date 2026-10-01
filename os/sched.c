@@ -92,7 +92,12 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
     t->state = THREAD_READY;
     t->stack = stack;
     t->stack_size = stack_size;
-    t->frame = 0;
+    t->frame = (struct irq_frame *)(top - sizeof(struct irq_frame));
+    for (uint32_t i = 0; i < 31; ++i) t->frame->x[i] = 0;
+    t->frame->x[30] = (uint64_t)thread_trampoline;
+    t->frame->elr = (uint64_t)entry;
+    t->frame->spsr = 0x5ULL;
+    t->frame->reserved = 0;
 
     t->ctx.x19 = (uint64_t)entry;
     t->ctx.x20 = 0;
@@ -115,7 +120,7 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
 static uint32_t next_ready(void) {
     for (uint32_t step = 1; step < MAX_THREADS; ++step) {
         uint32_t i = (current + step) % MAX_THREADS;
-        if (threads[i].state == THREAD_READY)
+        if (threads[i].state == THREAD_READY && threads[i].frame == 0)
             return i;
     }
     return current;
