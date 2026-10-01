@@ -21,3 +21,6 @@ Roadmap:
 boot -> exceptions -> timer/GIC -> MMU/PMM/heap -> scheduler -> processes/syscalls -> console/RAMFS/shell -> storage drivers -> persistent filesystem -> networking -> richer userland -> optional AI service.
 
 The AI subsystem will remain outside the kernel so the OS remains usable without Internet access or an LLM provider. The `awesome-free-llm-apis` project can later be used by an optional user-space AI client/service; API keys must remain outside the kernel and out of source control.
+
+
+Shell commands: `help`, `uname`, `version`, `mem`, `ps`, `ls`, `cat <file>`, `echo <text>`, `clear`.
