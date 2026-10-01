@@ -2,6 +2,7 @@
 #include "process.h"
 #include "pmm.h"
 #include "sched.h"
+#include "shell.h"
 
 #define USER_STACK_VA 0x82000000ULL
 #define PAGE_SIZE 0x1000ULL
