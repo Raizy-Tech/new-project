@@ -26,7 +26,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          timeout 8s qemu-system-aarch64 -M virt -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
+          timeout 8s qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
           status=$?
           cat /tmp/raizyos-qemu.log
           if [ "$status" -ne 124 ] && [ "$status" -ne 137 ]; then
