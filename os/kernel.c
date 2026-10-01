@@ -8,6 +8,14 @@ void exception_vectors(void);
 void mmu_init(void);
 void mmu_test(void);
 
+static uintptr_t find_dtb(void) {
+    const uint32_t magic = 0xedfe0dd0U;
+    for (uintptr_t p = 0x40000000ULL; p < 0x48000000ULL; p += 4) {
+        if (*(volatile uint32_t *)p == magic) return p;
+    }
+    return 0;
+}
+
 #define UART0_BASE 0x09000000UL
 #define UARTDR (*(volatile uint32_t *)(UART0_BASE + 0x00))
 #define UARTFR (*(volatile uint32_t *)(UART0_BASE + 0x18))
@@ -79,8 +87,9 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("Platform: QEMU virt / GICv3\n");
 
     struct dtb_info dtb;
-    if (dtb_address == 0) dtb_address = 0x40000000ULL;
-    if (!dtb_init(dtb_address, &dtb)) {
+    if (dtb_address == 0 || *(volatile uint32_t *)dtb_address != 0xedfe0dd0U)
+        dtb_address = find_dtb();
+    if (!dtb_address || !dtb_init(dtb_address, &dtb)) {
         uart_puts("DTB: discovery FAILED.\n");
         for (;;) __asm__ volatile("wfi");
     }
