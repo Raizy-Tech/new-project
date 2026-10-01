@@ -174,17 +174,25 @@ struct irq_frame *process_syscall_dispatch(struct irq_frame *frame) {
 int process_start_user(void) {
     const uint8_t *image = (const uint8_t *)_binary_build_user_bin_start;
     uint64_t image_size = (uint64_t)(_binary_build_user_bin_end - _binary_build_user_bin_start);
+    uart_puts_public("[PROCESS] creating address space.\n");
     proc.page_table = vm_create_address_space();
-    if (!proc.page_table) return 0;
-
-    uintptr_t entry = 0;
-    if (!load_elf(proc.page_table, image, image_size, &entry)) {
-        process_destroy();
+    if (!proc.page_table) {
+        uart_puts_public("[PROCESS] address space creation FAILED.\n");
         return 0;
     }
 
+    uintptr_t entry = 0;
+    uart_puts_public("[PROCESS] loading embedded ELF64.\n");
+    if (!load_elf(proc.page_table, image, image_size, &entry)) {
+        uart_puts_public("[PROCESS] ELF load FAILED.\n");
+        process_destroy();
+        return 0;
+    }
+    uart_puts_public("[PROCESS] ELF load PASSED.\n");
+
     uintptr_t stack_pa = pmm_alloc_page();
     if (!stack_pa || !track_page(stack_pa)) {
+        uart_puts_public("[PROCESS] user stack allocation FAILED.\n");
         if (stack_pa) pmm_free_page(stack_pa);
         process_destroy();
         return 0;
@@ -193,9 +201,11 @@ int process_start_user(void) {
         ((volatile uint8_t *)stack_pa)[i] = 0;
 
     if (!vm_map_user_page_in(proc.page_table, USER_STACK_VA, stack_pa, 1, 0)) {
+        uart_puts_public("[PROCESS] user stack mapping FAILED.\n");
         process_destroy();
         return 0;
     }
+    uart_puts_public("[PROCESS] user stack mapped.\n");
 
     proc.pid = next_pid++;
     proc.state = PROCESS_RUNNING;
@@ -206,6 +216,7 @@ int process_start_user(void) {
 
     sched_attach_current(proc.page_table);
     vm_switch_address_space(proc.page_table);
+    uart_puts_public("[PROCESS] entering EL0.\n");
 
     uintptr_t user_sp = USER_STACK_VA + PAGE_SIZE;
     __asm__ volatile(
