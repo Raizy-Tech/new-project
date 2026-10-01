@@ -8,6 +8,7 @@ user_program_start:
     mov x0, #0x2a
     mov x1, #0
     svc #1
+    svc #2
 1:
     wfe
     b 1b
