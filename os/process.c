@@ -15,6 +15,8 @@ extern char user_program_end;
 int vm_map_user_page(uintptr_t va, uintptr_t pa, int writable, int executable);
 uintptr_t vm_create_address_space(void);
 void vm_switch_address_space(uintptr_t root_pa);
+uintptr_t vm_current_kernel_root(void);
+void vm_destroy_address_space(uintptr_t root_pa);
 int vm_map_user_page_in(uintptr_t root_pa, uintptr_t va, uintptr_t pa, int writable, int executable);
 
 static struct process proc;
@@ -36,6 +38,8 @@ void process_init(void) {
     proc.page_table = 0;
     proc.user_text = 0;
     proc.user_stack = 0;
+    proc.code_pa = 0;
+    proc.stack_pa = 0;
     proc.syscalls = 0;
 }
 
@@ -45,6 +49,29 @@ uint64_t process_current_pid(void) {
 
 uint64_t process_syscalls(void) {
     return proc.syscalls;
+}
+
+void process_destroy(void) {
+    uintptr_t root = proc.page_table;
+    uintptr_t code = proc.code_pa;
+    uintptr_t stack = proc.stack_pa;
+
+    if (root) {
+        /* Never destroy the page table currently selected in TTBR0. */
+        vm_switch_address_space(vm_current_kernel_root());
+        vm_destroy_address_space(root);
+    }
+    if (code) pmm_free_page(code);
+    if (stack) pmm_free_page(stack);
+
+    proc.pid = 0;
+    proc.state = PROCESS_UNUSED;
+    proc.page_table = 0;
+    proc.user_text = 0;
+    proc.user_stack = 0;
+    proc.code_pa = 0;
+    proc.stack_pa = 0;
+    proc.syscalls = 0;
 }
 
 static int syscall_write_test(struct irq_frame *frame) {
@@ -89,7 +116,11 @@ int process_start_user(void) {
     if (!code_pa || !stack_pa) return 0;
 
     uint64_t code_size = (uint64_t)(&user_program_end - &user_program_start);
-    if (code_size > PAGE_SIZE) return 0;
+    if (code_size > PAGE_SIZE) {
+        pmm_free_page(code_pa);
+        pmm_free_page(stack_pa);
+        return 0;
+    }
 
     for (uint64_t i = 0; i < PAGE_SIZE; ++i)
         ((volatile uint8_t *)code_pa)[i] = 0;
@@ -102,16 +133,27 @@ int process_start_user(void) {
     user_code_sync(code_pa, code_size);
 
     proc.page_table = vm_create_address_space();
-    if (!proc.page_table) return 0;
+    if (!proc.page_table) {
+        pmm_free_page(code_pa);
+        pmm_free_page(stack_pa);
+        return 0;
+    }
 
     if (!vm_map_user_page_in(proc.page_table, USER_TEXT_VA, code_pa, 0, 1) ||
-        !vm_map_user_page_in(proc.page_table, USER_STACK_VA, stack_pa, 1, 0))
+        !vm_map_user_page_in(proc.page_table, USER_STACK_VA, stack_pa, 1, 0)) {
+        vm_destroy_address_space(proc.page_table);
+        proc.page_table = 0;
+        pmm_free_page(code_pa);
+        pmm_free_page(stack_pa);
         return 0;
+    }
 
     proc.pid = next_pid++;
     proc.state = PROCESS_RUNNING;
     proc.user_text = USER_TEXT_VA;
     proc.user_stack = USER_STACK_VA;
+    proc.code_pa = code_pa;
+    proc.stack_pa = stack_pa;
     proc.syscalls = 0;
 
     vm_switch_address_space(proc.page_table);
@@ -131,6 +173,7 @@ int process_start_user(void) {
 
 void process_user_return(void) {
     proc.state = PROCESS_ZOMBIE;
+    process_destroy();
     sched_test_start();
     for (;;) __asm__ volatile("wfi");
 }
