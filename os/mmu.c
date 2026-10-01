@@ -200,8 +200,7 @@ isb" ::: "memory");
     uint64_t sctlr;
     __asm__ volatile("mrs %0, sctlr_el1" : "=r"(sctlr));
     sctlr |= (1ULL << 0) | (1ULL << 2) | (1ULL << 12);
-    __asm__ volatile("msr sctlr_el1, %0
-isb" :: "r"(sctlr) : "memory");
+    __asm__ volatile("msr sctlr_el1, %0\nisb" :: "r"(sctlr) : "memory");
 }
 
 void mmu_test(void) {
