@@ -4,6 +4,8 @@
 #include "sched.h"
 #include "process.h"
 
+void process_user_return(void);
+
 static volatile uint32_t *const UARTDR = (volatile uint32_t *)0x09000000UL;
 static volatile uint32_t *const UARTFR = (volatile uint32_t *)0x09000018UL;
 #define UARTFR_TXFF (1u << 5)
@@ -37,6 +39,9 @@ struct irq_frame *exception_sync_handler(struct irq_frame *frame) {
         if (nr == 0x1 && frame->spsr == 0) {
             process_syscall(nr, frame->x[0]);
             frame->x[0] = 0x5241495a594f4b31ULL;
+        } else if (nr == 0x2 && frame->spsr == 0) {
+            frame->elr = (uint64_t)process_user_return;
+            frame->spsr = 0x5ULL;
         } else {
             uart_puts("\n[EXCEPTION] synchronous exception\n");
             uart_puts("  Cause: SVC instruction.\n");
