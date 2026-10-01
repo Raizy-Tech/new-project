@@ -29,6 +29,11 @@ struct elf64_phdr {
 
 extern char _binary_build_user_bin_start[];
 extern char _binary_build_user_bin_end[];
+uintptr_t vm_create_address_space(void);
+void vm_destroy_address_space(uintptr_t root_pa);
+void vm_switch_address_space(uintptr_t root_pa);
+uintptr_t vm_current_kernel_root(void);
+int vm_map_user_page_in(uintptr_t root_pa, uintptr_t va, uintptr_t pa, int writable, int executable);
 
 static struct process proc;
 static uint64_t next_pid = 1;
