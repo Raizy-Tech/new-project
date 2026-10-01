@@ -9,7 +9,7 @@ void mmu_init(void);
 void mmu_test(void);
 
 static uintptr_t find_dtb(void) {
-    const uint32_t magic = 0xd00dfeedU;
+    const uint32_t magic = 0xedfe0dd0U;
     for (uintptr_t p = 0x40000000ULL; p < 0x48000000ULL; p += 4) {
         if (*(volatile uint32_t *)p == magic) return p;
     }
@@ -89,7 +89,7 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("Platform: QEMU virt / GICv3\n");
 
     struct dtb_info dtb;
-    if (dtb_address == 0 || *(volatile uint32_t *)dtb_address != 0xd00dfeedU)
+    if (dtb_address == 0 || *(volatile uint32_t *)dtb_address != 0xedfe0dd0U)
         dtb_address = find_dtb();
     if (!dtb_address || !dtb_init(dtb_address, &dtb)) {
         uart_puts("DTB: discovery FAILED.\n");
