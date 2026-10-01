@@ -2,7 +2,8 @@
 #include "gic.h"
 
 static uintptr_t gicd_base = 0x08000000UL;
-static uintptr_t gicr_base = 0x080A0000UL
+static uintptr_t gicr_base = 0x080A0000UL;
+static uint32_t timer_ppi = 30u;
 
 #define GICD_CTLR 0x0000
 #define GICR_WAKER 0x0014
@@ -14,7 +15,7 @@ static uintptr_t gicr_base = 0x080A0000UL
 #define GICR_WAKER_PROCESSOR_SLEEP (1u << 1)
 #define GICR_WAKER_CHILDREN_ASLEEP (1u << 2)
 #define GICD_CTLR_ENABLE_G1NS (1u << 1)
-#define TIMER_PPI 30u
+
 
 static inline void mmio_write32(uintptr_t addr, uint32_t value) {
     *(volatile uint32_t *)addr = value;
@@ -24,9 +25,10 @@ static inline uint32_t mmio_read32(uintptr_t addr) {
     return *(volatile uint32_t *)addr;
 }
 
-void gic_init(uintptr_t distributor_base, uintptr_t redistributor_base) {
+void gic_init(uintptr_t distributor_base, uintptr_t redistributor_base, uint32_t ppi) {
     gicd_base = distributor_base;
     gicr_base = redistributor_base;
+    timer_ppi = ppi;
     uintptr_t r = gicr_base;
 
     uint32_t waker = mmio_read32(r + GICR_WAKER);
@@ -42,13 +44,13 @@ void gic_init(uintptr_t distributor_base, uintptr_t redistributor_base) {
     for (uint32_t i = 0; i < 32; i += 4)
         mmio_write32(r + GICR_IPRIORITYR0 + i, 0xa0a0a0a0u);
 
-    /* Enable the physical timer PPI, INTID 30. */
-    mmio_write32(r + GICR_ISENABLER0, 1u << TIMER_PPI);
+    /* Enable the DTB-discovered physical timer PPI. */
+    mmio_write32(r + GICR_ISENABLER0, 1u << timer_ppi);
 
     /* Enable Group 1 at the distributor. */
     uint32_t ctlr = mmio_read32(gicd_base + GICD_CTLR);
     ctlr |= GICD_CTLR_ENABLE_G1NS;
-    mmio_write32(GICD_BASE + GICD_CTLR, ctlr);
+    mmio_write32(gicd_base + GICD_CTLR, ctlr);
 
     /* Enable the GICv3 system-register CPU interface. */
     uint64_t sre = 7;

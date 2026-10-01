@@ -50,3 +50,4 @@ jobs:
           grep -q "DTB: UART base = 0x0000000009000000" /tmp/raizyos-qemu.log
           grep -q "DTB: GICD base = 0x0000000008000000" /tmp/raizyos-qemu.log
           grep -q "DTB: GICR base = 0x00000000080a0000" /tmp/raizyos-qemu.log
+          grep -q "DTB: timer PPI = 0x000000000000001e" /tmp/raizyos-qemu.log
