@@ -8,11 +8,6 @@ _start:
     cbnz    x0, .secondary_hang
     ldr     x1, =__stack_top
     mov     sp, x1
-    mov     x2, sp
-    msr     sp_el0, x2
-    sub     x2, x2, #0x2000
-    msr     sp_el1, x2
-    msr     spsel, xzr
     ldr     x1, =__bss_start
     ldr     x2, =__bss_end
     mov     x3, #0
