@@ -20,6 +20,16 @@ int vm_map_user_page_in(uintptr_t root_pa, uintptr_t va, uintptr_t pa, int writa
 static struct process proc;
 static uint64_t next_pid = 1;
 
+static void user_code_sync(uintptr_t start, uint64_t size) {
+    uintptr_t end = (start + size + 63ULL) & ~63ULL;
+    for (uintptr_t p = start & ~63ULL; p < end; p += 64ULL)
+        __asm__ volatile("dc cvau, %0" :: "r"(p) : "memory");
+    __asm__ volatile("dsb ish" ::: "memory");
+    for (uintptr_t p = start & ~63ULL; p < end; p += 64ULL)
+        __asm__ volatile("ic ivau, %0" :: "r"(p) : "memory");
+    __asm__ volatile("dsb ish\nisb" ::: "memory");
+}
+
 void process_init(void) {
     proc.pid = 0;
     proc.state = PROCESS_UNUSED;
@@ -89,6 +99,7 @@ int process_start_user(void) {
 
     for (uint64_t i = 0; i < PAGE_SIZE; ++i)
         ((volatile uint8_t *)stack_pa)[i] = 0;
+    user_code_sync(code_pa, code_size);
 
     proc.page_table = vm_create_address_space();
     if (!proc.page_table) return 0;
