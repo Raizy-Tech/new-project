@@ -98,8 +98,8 @@ static int load_elf(uintptr_t root, const uint8_t *image, uint64_t size, uintptr
         uart_puts_public("[ELF] bad magic.\n");
         return 0;
     }
-    uart_puts_public("[ELF] type = "); uart_hex64(eh->type); uart_puts_public(" machine = "); uart_hex64(eh->machine); uart_puts_public("\n");
-    uart_puts_public("[ELF] phoff = "); uart_hex64(eh->phoff); uart_puts_public(" phentsize = "); uart_hex64(eh->phentsize); uart_puts_public(" phnum = "); uart_hex64(eh->phnum); uart_puts_public("\n");
+    uart_puts_public("[ELF] type = "); process_hex64(eh->type); uart_puts_public(" machine = "); process_hex64(eh->machine); uart_puts_public("\n");
+    uart_puts_public("[ELF] phoff = "); process_hex64(eh->phoff); uart_puts_public(" phentsize = "); process_hex64(eh->phentsize); uart_puts_public(" phnum = "); process_hex64(eh->phnum); uart_puts_public("\n");
     if (eh->ident[4] != 2 || eh->ident[5] != 1 || eh->type != ET_EXEC || eh->machine != EM_AARCH64) {
         uart_puts_public("[ELF] header compatibility FAILED.\n");
         return 0;
@@ -109,7 +109,7 @@ static int load_elf(uintptr_t root, const uint8_t *image, uint64_t size, uintptr
 
     for (uint16_t i = 0; i < eh->phnum; ++i) {
         const struct elf64_phdr *ph = (const struct elf64_phdr *)(image + eh->phoff + (uint64_t)i * eh->phentsize);
-        uart_puts_public("[ELF] segment type = "); uart_hex64(ph->type); uart_puts_public(" vaddr = "); uart_hex64(ph->vaddr); uart_puts_public(" filesz = "); uart_hex64(ph->filesz); uart_puts_public(" memsz = "); uart_hex64(ph->memsz); uart_puts_public("\n");
+        uart_puts_public("[ELF] segment type = "); process_hex64(ph->type); uart_puts_public(" vaddr = "); process_hex64(ph->vaddr); uart_puts_public(" filesz = "); process_hex64(ph->filesz); uart_puts_public(" memsz = "); process_hex64(ph->memsz); uart_puts_public("\n");
         if (ph->type != PT_LOAD || !ph->memsz) continue;
         if (ph->filesz > ph->memsz || ph->offset > size || ph->filesz > size - ph->offset) return 0;
         if (ph->vaddr < 0x80000000ULL || ph->vaddr + ph->memsz < ph->vaddr ||
