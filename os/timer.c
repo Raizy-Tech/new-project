@@ -19,19 +19,18 @@ static inline void write_cntp_ctl(uint64_t value) {
 
 void timer_init(uint32_t ticks) {
     uint64_t frequency = read_cntfrq();
-    if (ticks == 0) ticks = (uint32_t)(frequency / 100);
+    uint64_t interval = ticks ? ticks : frequency / 100;
 
     tick_count = 0;
     write_cntp_ctl(0);
-    write_cntp_tval(ticks);
+    write_cntp_tval(interval);
     write_cntp_ctl(1);
     __asm__ volatile("isb");
 }
 
 void timer_irq_handler(void) {
     ++tick_count;
-    uint64_t frequency = read_cntfrq();
-    write_cntp_tval(frequency / 100);
+    write_cntp_tval(read_cntfrq() / 100);
 }
 
 uint64_t timer_ticks(void) {
