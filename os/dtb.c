@@ -54,6 +54,10 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
                 const uint32_t*v=(const uint32_t*)p;gb=(uintptr_t)cells(v,ac);
                 if(len>=(ac+sc)*8)gr=(uintptr_t)cells(v+ac+sc,ac);
             }
+            else if(node==NODE_TIMER&&streq(name,"interrupts")&&len>=24){
+                const uint32_t*v=(const uint32_t*)p;
+                timer_ppi=be32(v+4)+16;
+            }
             p=(const uint8_t*)align4((uintptr_t)(p+len));continue;
         }
         if(tag==FDT_NOP)continue;if(tag==FDT_END)break;return 0;
