@@ -61,7 +61,7 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
             }
             else if(node==NODE_TIMER&&streq(name,"interrupts")&&len>=24){
                 const uint32_t*v=(const uint32_t*)p;
-                timer_ppi=be32(v[1])+16;
+                timer_ppi=be32(v[4])+16;
             }
             p=(const uint8_t*)align4((uintptr_t)(p+len));continue;
         }
