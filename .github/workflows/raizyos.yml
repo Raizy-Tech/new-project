@@ -1,0 +1,26 @@
+name: RaizyOS ARM64
+
+on:
+  push:
+    paths:
+      - 'os/**'
+      - '.github/workflows/raizyos.yml'
+  pull_request:
+    paths:
+      - 'os/**'
+      - '.github/workflows/raizyos.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: os
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ARM64 toolchain and QEMU
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu qemu-system-arm
+      - name: Build kernel
+        run: make CROSS=aarch64-linux-gnu-
+      - name: Verify ELF
+        run: aarch64-linux-gnu-readelf -h build/kernel.elf
