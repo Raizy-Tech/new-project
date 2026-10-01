@@ -46,6 +46,8 @@ jobs:
           grep -q "PMM: 4 KiB page allocator ONLINE." /tmp/raizyos-qemu.log
           grep -q "PMM: page read/write + reclaim test PASSED." /tmp/raizyos-qemu.log
           grep -q "DTB: valid flattened device tree." /tmp/raizyos-qemu.log
+          grep -q "Milestone 11: VirtIO-MMIO block-device probe ONLINE" /tmp/raizyos-qemu.log
+          grep -q "Milestone 12: VirtIO block read test PASSED." /tmp/raizyos-qemu.log
           grep -q "Milestone 7: DTB hardware discovery ONLINE" /tmp/raizyos-qemu.log
           grep -q "VM: 4 KiB page mapping read/write test PASSED." /tmp/raizyos-qemu.log
           grep -q "DTB: UART base = 0x0000000009000000" /tmp/raizyos-qemu.log
