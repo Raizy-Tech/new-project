@@ -193,10 +193,7 @@ void mmu_init(void) {
     __asm__ volatile("msr mair_el1, %0" :: "r"(mair) : "memory");
     __asm__ volatile("msr tcr_el1, %0" :: "r"(tcr) : "memory");
     __asm__ volatile("msr ttbr0_el1, %0" :: "r"(l1_table) : "memory");
-    __asm__ volatile("dsb sy
-tlbi vmalle1
-dsb sy
-isb" ::: "memory");
+    __asm__ volatile("dsb sy\ntlbi vmalle1\ndsb sy\nisb" ::: "memory");
     uint64_t sctlr;
     __asm__ volatile("mrs %0, sctlr_el1" : "=r"(sctlr));
     sctlr |= (1ULL << 0) | (1ULL << 2) | (1ULL << 12);
