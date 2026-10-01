@@ -169,6 +169,7 @@ void kernel_main(uintptr_t dtb_address) {
             uart_puts("Heap: reclaim test FAILED.\n");
     }
 
+    process_init();
     uart_puts("Milestone 9: user process + syscall boundary...\n");
     process_start_user();
 
