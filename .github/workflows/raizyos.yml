@@ -24,11 +24,11 @@ jobs:
         run: make CROSS=aarch64-linux-gnu-
       - name: Verify ELF
         run: aarch64-linux-gnu-readelf -h build/kernel.elf
-      - name: QEMU boot smoke test
+      - name: QEMU timer IRQ smoke test
         shell: bash
         run: |
           set +e
-          timeout 8s qemu-system-aarch64 -M virt -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
+          timeout 5s qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
           status=$?
           cat /tmp/raizyos-qemu.log
           if [ "$status" -ne 124 ] && [ "$status" -ne 137 ]; then
@@ -36,8 +36,8 @@ jobs:
             exit 1
           fi
           grep -q "Kernel booted successfully." /tmp/raizyos-qemu.log
-          grep -q "Milestone 2: exception vectors ONLINE" /tmp/raizyos-qemu.log
           grep -q "Cause: SVC instruction from AArch64." /tmp/raizyos-qemu.log
           grep -q "SVC returned successfully." /tmp/raizyos-qemu.log
-          grep -q "Milestone 3: generic timer initialization" /tmp/raizyos-qemu.log
-          grep -q "Timer: ARM generic timer configured for 100 ms." /tmp/raizyos-qemu.log
+          grep -q "Milestone 4: waiting for real timer IRQs..." /tmp/raizyos-qemu.log
+          grep -q "\[TIMER\] tick 10" /tmp/raizyos-qemu.log
+          grep -q "\[TIMER\] tick 20" /tmp/raizyos-qemu.log
