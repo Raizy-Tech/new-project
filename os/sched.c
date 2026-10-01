@@ -34,6 +34,7 @@ static struct thread threads[MAX_THREADS];
 static uint32_t current;
 static uint64_t next_id = 1;
 static uint64_t switch_count;
+static uint64_t preempt_switch_count;
 
 struct context;
 extern void context_switch(struct context *old, struct context *next);
@@ -58,6 +59,7 @@ void sched_init(void) {
     threads[0].frame = 0;
     current = 0;
     switch_count = 0;
+    preempt_switch_count = 0;
 }
 
 int sched_create(thread_entry_t entry, uint64_t stack_size) {
@@ -147,6 +149,10 @@ uint64_t sched_switches(void) {
     return switch_count;
 }
 
+uint64_t sched_preempt_switches(void) {
+    return preempt_switch_count;
+}
+
 struct irq_frame *sched_preempt(struct irq_frame *frame) {
     if (!frame) return frame;
 
@@ -160,6 +166,7 @@ struct irq_frame *sched_preempt(struct irq_frame *frame) {
             threads[i].state = THREAD_RUNNING;
             current = i;
             ++switch_count;
+            ++preempt_switch_count;
             return threads[i].frame;
         }
     }
