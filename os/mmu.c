@@ -57,9 +57,45 @@ uintptr_t vm_create_address_space(void) {
         return 0;
     }
     uint64_t *user_l2 = (uint64_t *)user_l2_pa;
-    for (uint32_t i = 0; i < 512; ++i) user_l2[i] = l2_vm[i];
+    vm_zero_page(user_l2);
+
+    /*
+     * Copy the kernel's fixed VM-window mapping into private tables.
+     * Do not share l3_vm: a process address space must own its lower-level
+     * tables so later user mappings/unmapping cannot mutate the kernel root.
+     */
+    uintptr_t user_l3_pa = pmm_alloc_page();
+    if (!user_l3_pa) {
+        pmm_free_page(user_l2_pa);
+        pmm_free_page(root_pa);
+        return 0;
+    }
+    uint64_t *user_l3 = (uint64_t *)user_l3_pa;
+    for (uint32_t i = 0; i < 512; ++i) user_l3[i] = l3_vm[i];
+    user_l2[0] = (uint64_t)user_l3_pa | DESC_TABLE;
     root[2] = (uint64_t)user_l2_pa | DESC_TABLE;
     return root_pa;
+}
+
+void vm_destroy_address_space(uintptr_t root_pa) {
+    if (!root_pa || (root_pa & 0xfffULL)) return;
+
+    uint64_t *root = (uint64_t *)root_pa;
+    uint64_t root_l2_desc = root[2];
+    if (root_l2_desc & DESC_TABLE) {
+        uintptr_t l2_pa = (uintptr_t)(root_l2_desc & ~0xfffULL);
+        uint64_t *l2 = (uint64_t *)l2_pa;
+
+        for (uint32_t i = 0; i < 512; ++i) {
+            if (!(l2[i] & DESC_TABLE)) continue;
+            uintptr_t l3_pa = (uintptr_t)(l2[i] & ~0xfffULL);
+            pmm_free_page(l3_pa);
+            l2[i] = 0;
+        }
+        pmm_free_page(l2_pa);
+    }
+
+    pmm_free_page(root_pa);
 }
 
 void vm_switch_address_space(uintptr_t root_pa) {
