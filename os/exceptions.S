@@ -54,8 +54,7 @@ exception_sync_entry:
     str x0, [sp, #248]
     mrs x0, spsr_el1
     str x0, [sp, #256]
-    mrs x0, sp_el0
-    str x0, [sp, #264]
+    str xzr, [sp, #264]
     mov x0, sp
     bl exception_sync_handler
     mov sp, x0
@@ -63,8 +62,6 @@ exception_sync_entry:
     msr elr_el1, x0
     ldr x0, [sp, #256]
     msr spsr_el1, x0
-    ldr x0, [sp, #264]
-    msr sp_el0, x0
     ldp x0, x1, [sp, #0]
     ldp x2, x3, [sp, #16]
     ldp x4, x5, [sp, #32]
