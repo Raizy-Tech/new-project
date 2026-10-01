@@ -27,7 +27,7 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
     uint32_t total=be32(h->totalsize),so=be32(h->off_dt_struct),stro=be32(h->off_dt_strings),ss=be32(h->size_dt_struct),sts=be32(h->size_dt_strings);
     if(total<sizeof(*h)||so>=total||stro>=total||ss>total-so||sts>total-stro)return 0;
     const uint8_t*base=(const uint8_t*)a,*p=base+so,*end=p+ss,*strings=base+stro;
-    uint32_t ac=2,sc=1; int depth=-1,node=NODE_OTHER,md=-1; uintptr_t rb=0,ub=0,gb=0,gr=0;uint32_t timer_ppi=0;uint64_t rs=0;int have_ram=0;
+    uint32_t ac=2,sc=1; int depth=-1,node=NODE_OTHER; uintptr_t rb=0,ub=0,gb=0,gr=0;uint32_t timer_ppi=0;uint64_t rs=0;int have_ram=0;
     while(p<end){
         uint32_t tag=be32(*(const uint32_t*)p);p+=4;
         if(tag==FDT_BEGIN_NODE){
@@ -56,7 +56,7 @@ int dtb_init(uintptr_t a,struct dtb_info*i){
             }
             else if(node==NODE_TIMER&&streq(name,"interrupts")&&len>=24){
                 const uint32_t*v=(const uint32_t*)p;
-                timer_ppi=be32(v+4)+16;
+                timer_ppi=be32(v[1])+16;
             }
             p=(const uint8_t*)align4((uintptr_t)(p+len));continue;
         }
