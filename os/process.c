@@ -12,7 +12,7 @@ void sched_test_start(void);
 extern char user_program_start;
 extern char user_program_end;
 
-int vm_map_user_page(uintptr_t va, uintptr_t pa, int writable, int executable);
+int vm_map_user_page(uintptr_t va, uintptr_t pa, int writable, int executable);\nuintptr_t vm_create_address_space(void);\nvoid vm_switch_address_space(uintptr_t root_pa);\nint vm_map_user_page_in(uintptr_t root_pa, uintptr_t va, uintptr_t pa, int writable, int executable);
 
 static struct process proc;
 static uint64_t next_pid = 1;
@@ -98,7 +98,7 @@ int process_start_user(void) {
     proc.user_stack = USER_STACK_VA;
     proc.syscalls = 0;
 
-    uintptr_t user_sp = USER_STACK_VA + PAGE_SIZE;
+    vm_switch_address_space(proc.page_table);\n    uintptr_t user_sp = USER_STACK_VA + PAGE_SIZE;
 
     __asm__ volatile(
         "msr sp_el0, %0\n"
