@@ -17,10 +17,13 @@ struct process {
     uintptr_t page_table;
     uintptr_t user_text;
     uintptr_t user_stack;
+    uintptr_t code_pa;
+    uintptr_t stack_pa;
     uint64_t syscalls;
 };
 
 void process_init(void);
+void process_destroy(void);
 int process_start_user(void);
 uint64_t process_current_pid(void);
 uint64_t process_syscalls(void);
