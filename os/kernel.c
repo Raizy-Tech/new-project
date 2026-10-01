@@ -90,6 +90,11 @@ void kernel_main(uintptr_t dtb_address) {
     }
     dtb_print_info(&dtb);
     uart_puts("Milestone 7: DTB hardware discovery ONLINE\n");
+    if (dtb.virtio_base) {
+        uart_puts("Milestone 11: VirtIO-MMIO block-device discovery ONLINE\n");
+    } else {
+        uart_puts("VirtIO-MMIO: device not found.\n");
+    }
 
     exception_init();
     uart_puts("Milestone 2: exception vectors ONLINE\n");
