@@ -124,7 +124,13 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
 static uint32_t next_ready(void) {
     for (uint32_t step = 1; step < MAX_THREADS; ++step) {
         uint32_t i = (current + step) % MAX_THREADS;
-        if (threads[i].state == THREAD_READY && !threads[i].started) return i;
+        if (threads[i].state == THREAD_READY && threads[i].frame == 0)
+            return i;
+    }
+    for (uint32_t step = 1; step < MAX_THREADS; ++step) {
+        uint32_t i = (current + step) % MAX_THREADS;
+        if (threads[i].state == THREAD_READY && !threads[i].started)
+            return i;
     }
     return current;
 }
