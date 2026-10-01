@@ -3,6 +3,7 @@
 #include "timer.h"
 #include "pmm.h"
 #include "dtb.h"
+#include "heap.h"
 
 void exception_vectors(void);
 void mmu_init(void);
@@ -138,6 +139,27 @@ void kernel_main(uintptr_t dtb_address) {
             pmm_free_page(vm_page);
             if (pmm_free_count() == vm_before)
                 uart_puts("VM: dynamic PMM-backed mapping PASSED.\n");
+
+    heap_init();
+    uart_puts("Heap: page-backed kernel heap test...\n");
+    uint64_t heap_before = pmm_free_count();
+    uint8_t *a = (uint8_t *)kmalloc(64);
+    uint8_t *b = (uint8_t *)kmalloc(5000);
+    if (!a || !b) {
+        uart_puts("Heap: allocation FAILED.\n");
+    } else {
+        for (uint32_t i = 0; i < 64; ++i) a[i] = (uint8_t)i;
+        for (uint32_t i = 0; i < 5000; ++i) b[i] = (uint8_t)(i ^ 0xa5);
+        uint32_t ok = 1;
+        for (uint32_t i = 0; i < 64; ++i) if (a[i] != (uint8_t)i) ok = 0;
+        for (uint32_t i = 0; i < 5000; ++i) if (b[i] != (uint8_t)(i ^ 0xa5)) ok = 0;
+        kfree(a);
+        kfree(b);
+        if (ok && pmm_free_count() == heap_before)
+            uart_puts("Heap: allocation/read-write/free test PASSED.\n");
+        else
+            uart_puts("Heap: reclaim test FAILED.\n");
+    }
             else
                 uart_puts("VM: dynamic mapping reclaim FAILED.\n");
         } else {
