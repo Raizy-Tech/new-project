@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sm-tailoring.vercel.app/sitemap.xml
