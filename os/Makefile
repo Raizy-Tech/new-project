@@ -56,7 +56,7 @@ $(BUILD)/user_blob.o: $(BUILD)/user.elf
 $(BUILD)/dtb.o: dtb.c | $(BUILD)
 	$(CC) $(CFLAGS) -c $< -o $@
 $(BUILD)/kernel.elf: $(BUILD)/boot.o $(BUILD)/exceptions.o $(BUILD)/kernel.o $(BUILD)/exception.o $(BUILD)/gic.o $(BUILD)/timer.o $(BUILD)/mmu.o $(BUILD)/pmm.o $(BUILD)/heap.o $(BUILD)/context.o $(BUILD)/sched.o $(BUILD)/sched_test.o $(BUILD)/process.o $(BUILD)/uart.o $(BUILD)/ramfs.o $(BUILD)/shell.o $(BUILD)/virtio_blk.o $(BUILD)/user_blob.o $(BUILD)/dtb.o linker.ld
-	$(LD) $(LDFLAGS) -o $@ $(BUILD)/boot.o $(BUILD)/exceptions.o $(BUILD)/kernel.o $(BUILD)/exception.o $(BUILD)/gic.o $(BUILD)/timer.o $(BUILD)/mmu.o $(BUILD)/pmm.o $(BUILD)/heap.o $(BUILD)/context.o $(BUILD)/sched.o $(BUILD)/sched_test.o $(BUILD)/process.o $(BUILD)/uart.o $(BUILD)/ramfs.o $(BUILD)/shell.o $(BUILD)/user_blob.o $(BUILD)/dtb.o
+	$(LD) $(LDFLAGS) -o $@ $(BUILD)/boot.o $(BUILD)/exceptions.o $(BUILD)/kernel.o $(BUILD)/exception.o $(BUILD)/gic.o $(BUILD)/timer.o $(BUILD)/mmu.o $(BUILD)/pmm.o $(BUILD)/heap.o $(BUILD)/context.o $(BUILD)/sched.o $(BUILD)/sched_test.o $(BUILD)/process.o $(BUILD)/uart.o $(BUILD)/ramfs.o $(BUILD)/shell.o $(BUILD)/virtio_blk.o $(BUILD)/user_blob.o $(BUILD)/dtb.o
 run: $(BUILD)/kernel.elf
 	qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -kernel $(BUILD)/kernel.elf
 clean:
