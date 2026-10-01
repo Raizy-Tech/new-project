@@ -181,8 +181,7 @@ struct irq_frame *process_syscall_dispatch(struct irq_frame *frame) {
     case 4:
         ++proc.syscalls;
         frame->x[0] = 0;
-        uart_puts_public("[SYSCALL] yield handled.\n");
-        frame = sched_preempt(frame);
+        uart_puts_public("[SYSCALL] yield handled (non-blocking).\n");
         break;
     default:
         ++proc.syscalls;
