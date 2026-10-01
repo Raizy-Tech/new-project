@@ -93,6 +93,8 @@ void kernel_main(uintptr_t dtb_address) {
     uart_puts("Milestone 7: DTB hardware discovery ONLINE\n");
     if (dtb.virtio_base && virtio_blk_probe(dtb.virtio_base)) {
         uart_puts("Milestone 11: VirtIO-MMIO block-device probe ONLINE\n");
+        if (virtio_blk_self_test()) uart_puts("Milestone 12: VirtIO block read test PASSED.\n");
+        else uart_puts("VirtIO block read test FAILED.\n");
     } else {
         uart_puts("VirtIO-MMIO: device not found.\n");
     }
