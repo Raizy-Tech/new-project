@@ -29,6 +29,7 @@ struct thread {
     uint64_t stack_size;
     struct irq_frame *frame;
     uint8_t started;
+    uintptr_t exception_stack;
     uintptr_t page_table;
 };
 
@@ -37,6 +38,7 @@ static uint32_t current;
 static uint64_t next_id = 1;
 static uint64_t switch_count;
 static uint64_t preempt_switch_count;
+extern char __stack_top;
 
 struct context;
 extern void context_switch(struct context *old, struct context *next);
@@ -67,6 +69,7 @@ void sched_init(void) {
     threads[0].stack_size = 0;
     threads[0].frame = 0;
     threads[0].started = 1;
+    threads[0].exception_stack = (uintptr_t)&__stack_top - 0x2000ULL;
     threads[0].page_table = vm_current_kernel_root();
     current = 0;
     switch_count = 0;
@@ -107,15 +110,23 @@ int sched_create(thread_entry_t entry, uint64_t stack_size) {
     for (uint32_t i = 0; i < 31; ++i) t->frame->x[i] = 0;
     t->frame->x[30] = (uint64_t)thread_trampoline;
     t->frame->elr = (uint64_t)entry;
-    t->frame->spsr = 0x5ULL;
-    t->frame->reserved = 0;
+    t->frame->spsr = 0x4ULL;
+    t->frame->reserved = top;
     t->started = 0;
+    t->exception_stack = (uintptr_t)kmalloc(4096) + 4096ULL;
     t->ctx.x19 = (uint64_t)entry;
     t->ctx.x20 = 0; t->ctx.x21 = 0; t->ctx.x22 = 0; t->ctx.x23 = 0;
     t->ctx.x24 = 0; t->ctx.x25 = 0; t->ctx.x26 = 0; t->ctx.x27 = 0;
     t->ctx.x28 = 0; t->ctx.x29 = 0; t->ctx.x30 = (uint64_t)thread_trampoline;
     t->ctx.sp = top;
+    if (!t->exception_stack) {
+        kfree(stack);
+        t->state = THREAD_UNUSED;
+        interrupts_restore();
+        return 0;
+    }
     t->page_table = vm_current_kernel_root();
+    __asm__ volatile("msr sp_el1, %0" :: "r"(t->exception_stack) : "memory");
     interrupts_restore();
     return (int)t->id;
 }
@@ -143,9 +154,9 @@ void sched_yield(void) {
 
     threads[next].started = 1;
     threads[next].frame = 0;
+    __asm__ volatile("msr sp_el1, %0" :: "r"(threads[next].exception_stack) : "memory");
     interrupts_restore();
     context_switch(&threads[old].ctx, &threads[next].ctx);
-    set_exception_stack((uint8_t *)threads[next].stack + threads[next].stack_size);
 }
 
 uint64_t sched_current_id(void) { return threads[current].id; }
@@ -170,7 +181,7 @@ struct irq_frame *sched_preempt(struct irq_frame *frame) {
             ++preempt_switch_count;
             if (threads[i].page_table != threads[old].page_table)
                 vm_switch_address_space(threads[i].page_table);
-            set_exception_stack((uint8_t *)threads[i].stack + threads[i].stack_size);
+            __asm__ volatile("msr sp_el1, %0" :: "r"(threads[i].exception_stack) : "memory");
             interrupts_restore();
             return next_frame;
         }
