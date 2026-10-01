@@ -6,6 +6,7 @@
 #include "heap.h"
 #include "sched.h"
 #include "process.h"
+#include "uart.h"
 
 void exception_vectors(void);
 void sched_test_start(void);
@@ -22,20 +23,6 @@ static uintptr_t find_dtb(void) {
     return 0;
 }
 
-static uintptr_t uart_base = 0x09000000UL;
-#define UARTDR (*(volatile uint32_t *)(uart_base + 0x00))
-#define UARTFR (*(volatile uint32_t *)(uart_base + 0x18))
-#define UARTFR_TXFF (1u << 5)
-
-void uart_set_base(uintptr_t base) { if (base) uart_base = base; }
-
-void uart_putc(char c) {
-    while (UARTFR & UARTFR_TXFF) {}
-    UARTDR = (uint32_t)c;
-}
-void uart_puts_public(const char *s) {
-    while (*s) { if (*s == '\n') uart_putc('\r'); uart_putc(*s++); }
-}
 static void uart_puts(const char *s) { uart_puts_public(s); }
 static void uart_puthex(uint64_t value) {
     static const char digits[] = "0123456789abcdef";
