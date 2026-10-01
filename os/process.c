@@ -246,3 +246,5 @@ int process_start_user(void) {
         :: "r"(user_sp), "r"(entry) : "memory");
     __builtin_unreachable();
 }
+
+/* scheduler fault-symbol validation trigger */
