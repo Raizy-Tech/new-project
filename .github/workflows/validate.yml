@@ -1,0 +1,27 @@
+name: Validate website
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Check JavaScript syntax
+        run: node --check script.js
+      - name: Check required site files
+        run: |
+          test -f index.html
+          test -f style.css
+          test -f script.js
+          test -f ai-assistant.html
+          test -f api/chat.js
+          test -f manifest.webmanifest
+          test -f favicon.svg
