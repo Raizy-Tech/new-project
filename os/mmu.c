@@ -51,6 +51,19 @@ int vm_map_page(uintptr_t va, uintptr_t pa) {
     return 1;
 }
 
+uintptr_t vm_get_pa(uintptr_t va) {
+    if ((va & 0xfffULL) || va < 0x80000000ULL || va >= 0xc0000000ULL) return 0;
+    uint32_t l1i = (uint32_t)((va >> 30) & 0x1ff);
+    uint32_t l2i = (uint32_t)((va >> 21) & 0x1ff);
+    uint32_t l3i = (uint32_t)((va >> 12) & 0x1ff);
+    if (!(l1_table[l1i] & DESC_TABLE)) return 0;
+    uint64_t *l2 = (uint64_t *)(uintptr_t)(l1_table[l1i] & ~0xfffULL);
+    if (!(l2[l2i] & DESC_TABLE)) return 0;
+    uint64_t *l3 = (uint64_t *)(uintptr_t)(l2[l2i] & ~0xfffULL);
+    if (!(l3[l3i] & DESC_PAGE)) return 0;
+    return (uintptr_t)(l3[l3i] & ~0xfffULL);
+}
+
 int vm_unmap_page(uintptr_t va) {
     if ((va & 0xfffULL) || va < 0x80000000ULL || va >= 0xc0000000ULL) return 0;
     uint32_t l1i = (uint32_t)((va >> 30) & 0x1ff);
