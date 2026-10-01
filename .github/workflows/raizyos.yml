@@ -44,3 +44,5 @@ jobs:
           grep -q "Milestone 6: physical memory manager..." /tmp/raizyos-qemu.log
           grep -q "PMM: 4 KiB page allocator ONLINE." /tmp/raizyos-qemu.log
           grep -q "PMM: page read/write + reclaim test PASSED." /tmp/raizyos-qemu.log
+          grep -q "DTB: valid flattened device tree." /tmp/raizyos-qemu.log
+          grep -q "Milestone 7: DTB hardware discovery ONLINE" /tmp/raizyos-qemu.log
