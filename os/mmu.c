@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "pmm.h"
 
 #define DESC_BLOCK 0x1ULL
 #define DESC_PAGE 0x3ULL
@@ -17,6 +18,53 @@ __attribute__((aligned(4096))) static uint64_t l2_vm[512];
 __attribute__((aligned(4096))) static uint64_t l3_vm[512];
 
 void uart_puts_public(const char *);
+
+static void vm_tlb_flush(uintptr_t va) {
+    uint64_t operand = (uint64_t)(va >> 12);
+    __asm__ volatile("dsb ishst\ntlbi vae1is, %0\ndsb ish\nisb" :: "r"(operand) : "memory");
+}
+
+int vm_map_page(uintptr_t va, uintptr_t pa) {
+    if ((va & 0xfffULL) || (pa & 0xfffULL)) return 0;
+    if (va < 0x80000000ULL || va >= 0xc0000000ULL) return 0;
+
+    uint32_t l1i = (uint32_t)((va >> 30) & 0x1ff);
+    uint32_t l2i = (uint32_t)((va >> 21) & 0x1ff);
+    uint32_t l3i = (uint32_t)((va >> 12) & 0x1ff);
+
+    uint64_t *l1 = l1_table;
+    if (!(l1[l1i] & DESC_TABLE)) return 0;
+    uint64_t *l2 = (uint64_t *)(uintptr_t)(l1[l1i] & ~0xfffULL);
+
+    if (!(l2[l2i] & DESC_TABLE)) {
+        uintptr_t page = pmm_alloc_page();
+        if (!page) return 0;
+        uint64_t *l3 = (uint64_t *)page;
+        for (uint32_t i = 0; i < 512; ++i) l3[i] = 0;
+        l2[l2i] = ((uint64_t)l3) | DESC_TABLE;
+    }
+
+    uint64_t *l3 = (uint64_t *)(uintptr_t)(l2[l2i] & ~0xfffULL);
+    l3[l3i] = (uint64_t)pa | DESC_PAGE | DESC_AF | DESC_AP_RW_EL1 |
+              DESC_ATTRINDX(0) | DESC_SH_INNER;
+    vm_tlb_flush(va);
+    return 1;
+}
+
+int vm_unmap_page(uintptr_t va) {
+    if ((va & 0xfffULL) || va < 0x80000000ULL || va >= 0xc0000000ULL) return 0;
+    uint32_t l1i = (uint32_t)((va >> 30) & 0x1ff);
+    uint32_t l2i = (uint32_t)((va >> 21) & 0x1ff);
+    uint32_t l3i = (uint32_t)((va >> 12) & 0x1ff);
+    if (!(l1_table[l1i] & DESC_TABLE)) return 0;
+    uint64_t *l2 = (uint64_t *)(uintptr_t)(l1_table[l1i] & ~0xfffULL);
+    if (!(l2[l2i] & DESC_TABLE)) return 0;
+    uint64_t *l3 = (uint64_t *)(uintptr_t)(l2[l2i] & ~0xfffULL);
+    if (!(l3[l3i] & DESC_PAGE)) return 0;
+    l3[l3i] = 0;
+    vm_tlb_flush(va);
+    return 1;
+}
 
 void mmu_init(void) {
     for (uint32_t i = 0; i < 512; ++i) l1_table[i] = 0;
