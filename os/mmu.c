@@ -11,6 +11,7 @@
 
 __attribute__((aligned(4096))) static uint64_t l1_table[512];
 __attribute__((aligned(4096))) static uint64_t l2_low[512];
+__attribute__((aligned(4096))) static uint64_t l2_ram[512];
 
 void uart_puts_public(const char *);
 
@@ -36,8 +37,16 @@ void mmu_init(void) {
 
     l1_table[0] = ((uint64_t)l2_low) | DESC_TABLE;
 
+    /* VA 1GB..2GB -> PA 1GB..2GB, where the kernel and RAM live. */
+    for (uint32_t i = 0; i < 512; ++i) {
+        uint64_t pa = 0x40000000ULL + (uint64_t)i * 0x200000ULL;
+        l2_ram[i] = pa | DESC_BLOCK | DESC_AF | DESC_AP_RW_EL1 |
+                    DESC_ATTRINDX(0) | DESC_SH_INNER;
+    }
+    l1_table[1] = ((uint64_t)l2_ram) | DESC_TABLE;
+
     uint64_t mair = 0x04ULL << 8 | 0xffULL;
-    uint64_t tcr = 34ULL | (1ULL << 8) | (1ULL << 10) |
+    uint64_t tcr = 32ULL | (1ULL << 8) | (1ULL << 10) |
                    (3ULL << 12) | (5ULL << 32);
 
     __asm__ volatile("msr mair_el1, %0" :: "r"(mair) : "memory");
