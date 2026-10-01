@@ -35,9 +35,8 @@ struct irq_frame *exception_sync_handler(struct irq_frame *frame) {
     uint32_t ec = (uint32_t)(esr >> 26);
 
     if (ec == 0x15) {
-        if (frame->spsr == 0) {
-            process_syscall_dispatch(frame);
-            return frame;
+        if ((frame->spsr & 0x1fULL) == 0) {
+            return process_syscall_dispatch(frame);
         }
         uart_puts("[EXCEPTION] kernel SVC ignored.\n");
         return frame;
