@@ -2,6 +2,7 @@
 #include "gic.h"
 #include "timer.h"
 #include "pmm.h"
+#include "dtb.h"
 
 void exception_vectors(void);
 void mmu_init(void);
@@ -69,13 +70,22 @@ static void pmm_test(void) {
     uart_puts("PMM: page read/write + reclaim test PASSED.\n");
     uart_puts("PMM: free pages = "); uart_puthex(before); uart_puts("\n");
 }
-void kernel_main(void) {
+void kernel_main(uintptr_t dtb_address) {
     uart_puts("\n========================================\n");
     uart_puts("              RaizyOS ARM64             \n");
     uart_puts("========================================\n");
     uart_puts("Kernel booted successfully.\n");
     uart_puts("Architecture: AArch64\n");
     uart_puts("Platform: QEMU virt / GICv3\n");
+
+    struct dtb_info dtb;
+    if (dtb_address == 0) dtb_address = 0x40000000ULL;
+    if (!dtb_init(dtb_address, &dtb)) {
+        uart_puts("DTB: discovery FAILED.\n");
+        for (;;) __asm__ volatile("wfi");
+    }
+    dtb_print_info(&dtb);
+    uart_puts("Milestone 7: DTB hardware discovery ONLINE\n");
 
     exception_init();
     uart_puts("Milestone 2: exception vectors ONLINE\n");
