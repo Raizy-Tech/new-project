@@ -7,7 +7,9 @@
 #define VIRTIO_MMIO_DEVICE_ID 0x008
 #define VIRTIO_MMIO_STATUS 0x070
 #define VIRTIO_MMIO_DEVICE_FEATURES 0x010
+#define VIRTIO_MMIO_DEVICE_FEATURES_SEL 0x014
 #define VIRTIO_MMIO_DRIVER_FEATURES 0x020
+#define VIRTIO_MMIO_DRIVER_FEATURES_SEL 0x024
 #define VIRTIO_MMIO_QUEUE_SEL 0x030
 #define VIRTIO_MMIO_QUEUE_NUM_MAX 0x034
 #define VIRTIO_MMIO_QUEUE_NUM 0x038
@@ -77,9 +79,9 @@ static int setup_queue(void){
     uintptr_t rp=pmm_alloc_page(), bp=pmm_alloc_page();
     if(!dp||!ap||!up||!rp||!bp)return 0;
     memzero((void*)dp,4096);memzero((void*)ap,4096);memzero((void*)up,4096);
-    memzero((void*)rp,4096);memzero((void*)bp,4096);
+    memzero((void*)rp,4096);memzero((void*)bp,4096);memzero((void*)sp,4096);
     q.desc=(struct vring_desc*)dp;q.avail=(struct vring_avail*)ap;
-    q.used=(struct vring_used*)up;q.req=(struct blk_req*)rp;q.data=(uint8_t*)bp;q.last_used=0;
+    q.used=(struct vring_used*)up;q.req=(struct blk_req*)rp;q.data=(uint8_t*)bp;q.status=(uint8_t*)sp;q.last_used=0;
     q.desc[0].addr=(uint64_t)rp;q.desc[0].len=16;q.desc[0].flags=0;q.desc[0].next=1;
     q.desc[1].addr=(uint64_t)bp;q.desc[1].len=512;q.desc[1].flags=VRING_DESC_F_WRITE;q.desc[1].next=2;
     q.desc[2].addr=(uint64_t)bp;q.desc[2].len=0;q.desc[2].flags=VRING_DESC_F_WRITE;
@@ -94,14 +96,14 @@ static int setup_queue(void){
 static int submit(uint32_t type,uint64_t sector){
     q.req->type=type;q.req->reserved=0;q.req->sector=sector;
     q.desc[1].flags=(type==VIRTIO_BLK_T_IN)?VRING_DESC_F_WRITE:0;
-    q.desc[2].addr=(uint64_t)&q.req->reserved;q.desc[2].len=1;q.desc[2].flags=VRING_DESC_F_WRITE;
+    q.desc[2].addr=(uint64_t)q.status;q.desc[2].len=1;q.desc[2].flags=VRING_DESC_F_WRITE;
     q.avail->ring[q.avail->idx%8]=0;barrier();q.avail->idx++;barrier();
     *reg32(VIRTIO_MMIO_QUEUE_NOTIFY)=0;
     for(uint32_t i=0;i<1000000;i++){
         barrier();
         if(q.used->idx!=q.last_used){
             q.last_used=q.used->idx;
-            return *(volatile uint8_t *)((uintptr_t)&q.req->reserved)==0;
+            return *q.status==0;
         }
     }
     return 0;
@@ -122,7 +124,7 @@ static int device_init(void){
 
 int virtio_blk_self_test(void){
     if(!g_device_id||!device_init())return 0;
-    q.req->type=VIRTIO_BLK_T_IN;q.req->reserved=0;q.req->sector=0;
+    q.status[0]=0xff;\n    q.req->type=VIRTIO_BLK_T_IN;q.req->reserved=0;q.req->sector=0;
     if(!submit(VIRTIO_BLK_T_IN,0))return 0;
     volatile uint8_t *d=q.data;
     for(uint32_t i=0;i<512;i++)if(d[i]!=0)return 0;
