@@ -76,10 +76,10 @@ static int setup_queue(void){
     uint32_t n=max>8?8:max;
     *reg32(VIRTIO_MMIO_QUEUE_NUM)=n;
     uintptr_t dp=pmm_alloc_page(), ap=pmm_alloc_page(), up=pmm_alloc_page();
-    uintptr_t rp=pmm_alloc_page(), bp=pmm_alloc_page();
-    if(!dp||!ap||!up||!rp||!bp)return 0;
+    uintptr_t rp=pmm_alloc_page(), bp=pmm_alloc_page(), sp=pmm_alloc_page();
+    if(!dp||!ap||!up||!rp||!bp||!sp)return 0;
     memzero((void*)dp,4096);memzero((void*)ap,4096);memzero((void*)up,4096);
-    memzero((void*)rp,4096);memzero((void*)bp,4096);memzero((void*)sp,4096);
+    memzero((void*)rp,4096);memzero((void*)bp,4096);memzero((void*)sp,4096);memzero((void*)sp,4096);
     q.desc=(struct vring_desc*)dp;q.avail=(struct vring_avail*)ap;
     q.used=(struct vring_used*)up;q.req=(struct blk_req*)rp;q.data=(uint8_t*)bp;q.status=(uint8_t*)sp;q.last_used=0;
     q.desc[0].addr=(uint64_t)rp;q.desc[0].len=16;q.desc[0].flags=0;q.desc[0].next=1;
