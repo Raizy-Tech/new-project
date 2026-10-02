@@ -28,7 +28,7 @@ jobs:
         shell: bash
         run: |
           set +e
-          timeout 5s qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
+          dd if=/dev/zero of=/tmp/raizyos-disk.img bs=1M count=16 status=none\n          timeout 5s qemu-system-aarch64 -M virt,gic-version=3,highmem-redists=off -cpu cortex-a53 -m 128M -nographic -monitor none -drive if=none,file=/tmp/raizyos-disk.img,format=raw,id=drive0 -device virtio-blk-device,drive=drive0,romfile= -kernel build/kernel.elf > /tmp/raizyos-qemu.log 2>&1
           status=$?
           cat /tmp/raizyos-qemu.log
           if [ "$status" -ne 124 ] && [ "$status" -ne 137 ] && [ "$status" -ne 143 ]; then
