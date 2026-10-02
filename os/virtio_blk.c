@@ -47,6 +47,7 @@ struct blk_queue {
     struct vring_used *used;
     struct blk_req *req;
     uint8_t *data;
+    uint8_t *status;
     uint16_t last_used;
 };
 
