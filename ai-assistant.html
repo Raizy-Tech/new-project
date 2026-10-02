@@ -4,111 +4,162 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>AI Tailoring Assistant | SM Tailoring</title>
-<meta name="description" content="Ask the SM Tailoring assistant about blouse stitching, alterations, dresses, embroidery and fitting.">
+<meta name="description" content="AI-powered tailoring guidance from SM Tailoring in Dharmavaram. Get help with blouse designs, measurements, alterations, fitting and enquiries.">
 <link rel="stylesheet" href="style.css">
 <style>
-.assistant-page{min-height:100vh;padding:110px 7% 70px;background:radial-gradient(circle at 85% 15%,rgba(185,149,88,.14),transparent 30%),var(--cream);position:relative;overflow:hidden}.assistant-page:before{content:'SM';position:absolute;right:-8vw;top:-8vw;font:500 40vw/1 'Playfair Display',serif;color:rgba(91,31,50,.035);pointer-events:none}
-.assistant-shell{max-width:820px;margin:auto}
-.assistant-card{position:relative;z-index:1;background:rgba(252,250,246,.88);backdrop-filter:blur(18px);border:1px solid #e7d9c6;padding:32px;box-shadow:0 30px 80px rgba(50,27,25,.10)}
-.assistant-title{font:500 clamp(38px,6vw,58px)/1.1 'Playfair Display',serif;color:var(--wine);margin:12px 0 18px}
-.assistant-note{color:var(--muted);max-width:650px}
-.chat{height:420px;overflow:auto;margin:28px 0;padding:18px;background:#efe5d8;border:1px solid #e7d9c6;scroll-behavior:smooth}
-.msg{max-width:80%;padding:13px 16px;margin:10px 0;white-space:pre-wrap;animation:assistantIn .45s cubic-bezier(.22,1,.36,1)}
+.assistant-page{min-height:100vh;padding:105px 6% 70px;background:radial-gradient(circle at 85% 15%,rgba(185,149,88,.14),transparent 30%),var(--cream);position:relative;overflow:hidden}
+.assistant-page:before{content:'SM';position:absolute;right:-8vw;top:-8vw;font:500 40vw/1 'Playfair Display',serif;color:rgba(91,31,50,.035);pointer-events:none}
+.assistant-shell{max-width:1050px;margin:auto;position:relative;z-index:1}
+.back{display:inline-block;margin-bottom:18px;color:var(--wine);text-decoration:none;font-weight:600}
+.assistant-layout{display:grid;grid-template-columns:.78fr 1.22fr;gap:22px;align-items:start}
+.assistant-intro,.assistant-card{background:rgba(252,250,246,.9);backdrop-filter:blur(18px);border:1px solid #e7d9c6;box-shadow:0 30px 80px rgba(50,27,25,.09)}
+.assistant-intro{padding:34px;position:sticky;top:100px}
+.assistant-title{font:500 clamp(38px,6vw,58px)/1.05 'Playfair Display',serif;color:var(--wine);margin:12px 0 18px}
+.assistant-note{color:var(--muted);margin:0 0 24px}
+.consult-list{display:grid;gap:10px;margin:0;padding:0;list-style:none}
+.consult-list li{padding:12px 13px;background:var(--paper);border:1px solid #e7d9c6;font-size:12px}
+.consult-list b{color:var(--wine)}
+.whatsapp-mini{margin-top:22px;padding-top:20px;border-top:1px solid var(--line);font-size:11px;color:var(--muted)}
+.whatsapp-mini a{color:var(--wine);font-weight:700}
+.assistant-card{padding:28px}
+.chat-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+.status{display:flex;align-items:center;gap:8px;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.status i{width:7px;height:7px;border-radius:50%;background:#7a9a62;box-shadow:0 0 0 4px rgba(122,154,98,.12)}
+.model-note{font-size:9px;color:var(--gold);letter-spacing:.1em;text-transform:uppercase}
+.chat{height:470px;overflow:auto;margin:18px 0;padding:17px;background:#efe5d8;border:1px solid #e7d9c6;scroll-behavior:smooth}
+.msg{max-width:86%;padding:13px 16px;margin:10px 0;white-space:pre-wrap;animation:assistantIn .4s cubic-bezier(.22,1,.36,1);font-size:13px}
 .msg.assistant{background:var(--paper);border:1px solid #e7d9c6}
 .msg.user{margin-left:auto;background:var(--wine);color:white}
-.assistant-form{display:flex;gap:10px}
-.assistant-form input{margin:0}
-.assistant-form button{flex:0 0 auto}
-.quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.quick button{border:1px solid #d8cbb9;background:var(--paper);padding:9px 12px;cursor:pointer;transition:transform .3s,background .3s}.quick button:hover{transform:translateY(-2px);background:#fff}
-.back{display:inline-block;margin-bottom:20px;color:var(--wine);text-decoration:none;font-weight:600}
-@media(max-width:600px){.assistant-page{padding:35px 5%}.assistant-card{padding:20px}.chat{height:380px}.assistant-form{flex-direction:column}.assistant-form button{width:100%}}
-@keyframes assistantIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){.msg,.quick button{animation:none;transition:none}}\n</style>
+.typing{opacity:.65;font-style:italic}
+.assistant-form{display:grid;grid-template-columns:1fr auto;gap:10px}
+.assistant-form input{margin:0;border:1px solid var(--line);padding:13px 14px;background:var(--paper);outline:none;font:14px 'DM Sans',sans-serif}
+.assistant-form input:focus{border-color:var(--gold)}
+.assistant-form button{min-width:105px}
+.quick-title{margin:18px 0 9px;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+.quick{display:flex;gap:8px;flex-wrap:wrap}
+.quick button{border:1px solid #d8cbb9;background:var(--paper);padding:9px 12px;cursor:pointer;transition:transform .3s,background .3s;font:11px 'DM Sans',sans-serif;color:var(--ink)}
+.quick button:hover{transform:translateY(-2px);background:#fff}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.actions .button{flex:1}
+.disclaimer{font-size:9px;color:var(--muted);margin:16px 0 0}
+@media(max-width:850px){.assistant-layout{grid-template-columns:1fr}.assistant-intro{position:static}.assistant-intro{padding:26px}.chat{height:410px}}
+@media(max-width:600px){.assistant-page{padding:35px 5%}.assistant-card{padding:18px}.assistant-form{grid-template-columns:1fr}.assistant-form button{width:100%}.actions .button{width:100%}}
+@keyframes assistantIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.msg,.quick button{animation:none;transition:none}}
+</style>
 </head>
 <body>
 <main class="assistant-page">
 <div class="assistant-shell">
 <a class="back" href="index.html">← Back to SM Tailoring</a>
-<div class="assistant-card">
+<div class="assistant-layout">
+<section class="assistant-intro">
 <p class="eyebrow">SM TAILORING · DHARMAVARAM</p>
-<h1 class="assistant-title">Ask our tailoring assistant.</h1>
-<p class="assistant-note">Get quick guidance about services, blouse designs, alterations, fitting and measurements. For exact prices or availability, the assistant will direct you to WhatsApp.</p>
+<h1 class="assistant-title">Your tailoring questions, answered.</h1>
+<p class="assistant-note">The assistant helps you prepare before contacting Sivamma. Ask about blouse measurements, fit, alterations, designs, fabrics or which service you may need.</p>
+<ul class="consult-list">
+<li><b>01</b> Blouse measurement guidance</li>
+<li><b>02</b> Fit and alteration troubleshooting</li>
+<li><b>03</b> Design and neckline ideas</li>
+<li><b>04</b> What to prepare before visiting</li>
+</ul>
+<div class="whatsapp-mini">For exact pricing, timing or an order decision, continue directly with Sivamma on <a href="https://wa.me/919177787592?text=Hello%20SM%20Tailoring%2C%20I%20used%20your%20AI%20assistant%20and%20would%20like%20to%20ask%20about%20an%20order." target="_blank" rel="noopener">WhatsApp</a>.</div>
+</section>
+
+<section class="assistant-card" aria-label="SM Tailoring AI assistant">
+<div class="chat-head">
+<div class="status"><i></i> Assistant ready</div>
+<div class="model-note">Powered by Qwen3 235B</div>
+</div>
 
 <div id="chat" class="chat" aria-live="polite">
-<div class="msg assistant">Hello. I can help with SM Tailoring services, blouse stitching, alterations, fitting, dresses and embroidery. What would you like to know?</div>
+<div class="msg assistant">Hello. I’m the SM Tailoring assistant. Tell me what you are making or changing, and I’ll help you prepare for the tailoring conversation.</div>
 </div>
 
 <form id="assistant-form" class="assistant-form">
-<input id="message" maxlength="1000" autocomplete="off" placeholder="Ask a tailoring question…" required>
+<input id="message" maxlength="1500" autocomplete="off" aria-label="Your tailoring question" placeholder="Example: I need a blouse for a wedding. What should I prepare?" required>
 <button class="button primary" type="submit">Ask</button>
 </form>
 
+<p class="quick-title">Start with a common question</p>
 <div class="quick">
-<button type="button" data-question="What services do you provide?">Services</button>
-<button type="button" data-question="What measurements are usually needed for a blouse?">Blouse measurements</button>
-<button type="button" data-question="Can you alter an existing blouse?">Alterations</button>
-<button type="button" data-question="How can I contact SM Tailoring?">Contact</button>
+<button type="button" data-question="I need a blouse for a wedding. What details should I decide before stitching?">Wedding blouse</button>
+<button type="button" data-question="What measurements are usually needed for a blouse?">Measurements</button>
+<button type="button" data-question="My blouse feels tight under the arms. What could be causing it?">Fit problem</button>
+<button type="button" data-question="I have an existing blouse that needs alteration. What should I bring?">Alteration</button>
+<button type="button" data-question="What services does SM Tailoring provide?">Services</button>
+<button type="button" data-question="What should I send on WhatsApp before visiting?">Prepare enquiry</button>
 </div>
 
-<p style="margin-top:18px"><a class="button secondary" href="https://wa.me/919177787592?text=Hello%20SM%20Tailoring%2C%20I%20used%20your%20AI%20assistant%20and%20would%20like%20to%20ask%20about%20an%20order." target="_blank" rel="noopener">Continue on WhatsApp</a></p>
+<div class="actions">
+<a class="button secondary" href="index.html#contact">View contact</a>
+<a class="button primary" href="https://wa.me/919177787592?text=Hello%20SM%20Tailoring%2C%20I%20used%20your%20AI%20assistant%20and%20would%20like%20to%20ask%20about%20an%20order." target="_blank" rel="noopener">Continue on WhatsApp ↗</a>
+</div>
+<p class="disclaimer">AI guidance is general. Final measurements, fit decisions, prices and order details should be confirmed with the tailor.</p>
+</section>
 </div>
 </div>
 </main>
+
 <script>
 const chat=document.querySelector('#chat');
 const form=document.querySelector('#assistant-form');
 const input=document.querySelector('#message');
+const button=form.querySelector('button');
+const messages=[];
 
-function addMessage(text,type){
+function addMessage(text,type,extra=''){
   const el=document.createElement('div');
-  el.className='msg '+type;
+  el.className='msg '+type+' '+extra;
   el.textContent=text;
   chat.appendChild(el);
   chat.scrollTop=chat.scrollHeight;
+  return el;
 }
 
 async function ask(message){
-  addMessage(message,'user');
+  const clean=message.trim();
+  if(!clean)return;
+
+  addMessage(clean,'user');
+  messages.push({role:'user',content:clean});
   input.value='';
   input.disabled=true;
-  form.querySelector('button').disabled=true;
-  addMessage('Thinking…','assistant');
-  const thinking=chat.lastElementChild;
+  button.disabled=true;
+
+  const thinking=addMessage('Thinking…','assistant','typing');
 
   try{
     const response=await fetch('/api/chat',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({message})
+      body:JSON.stringify({message:clean,history:messages.slice(-9,-1)})
     });
     const data=await response.json();
     thinking.remove();
+
     if(!response.ok) throw new Error(data.error||'Request failed');
+
     addMessage(data.answer,'assistant');
+    messages.push({role:'assistant',content:data.answer});
   }catch(error){
     thinking.remove();
-    const q=message.toLowerCase();
-    let fallback='I can help with SM Tailoring services, blouse stitching, alterations, fitting and embroidery. For exact pricing or availability, please continue on WhatsApp.';
-    if(q.includes('service')) fallback='SM Tailoring offers custom blouse stitching, blouse alterations, women\'s tailoring, dress stitching, embroidery and custom fitting.';
-    else if(q.includes('measure')) fallback='For a blouse, measurements commonly include bust, shoulder, armhole, sleeve length, blouse length and the neckline/depth you want. Final measurements should be confirmed with the tailor.';
-    else if(q.includes('alter')) fallback='Yes. SM Tailoring handles blouse alterations and fitting adjustments. Share a photo or describe the fit issue on WhatsApp for specific guidance.';
-    else if(q.includes('contact')||q.includes('phone')||q.includes('whatsapp')) fallback='You can contact Sivamma at +91 91777 87592 on WhatsApp or call the same number.';
-    addMessage(fallback,'assistant');
+    const fallback='I can still help with services, blouse measurements, alterations and fitting. For exact pricing or order details, please continue on WhatsApp.';
+    addMessage(error.message&&error.message.includes('not configured')?fallback:error.message||fallback,'assistant');
   }finally{
     input.disabled=false;
-    form.querySelector('button').disabled=false;
+    button.disabled=false;
     input.focus();
   }
 }
 
 form.addEventListener('submit',event=>{
   event.preventDefault();
-  const message=input.value.trim();
-  if(message) ask(message);
+  ask(input.value);
 });
 
-document.querySelectorAll('[data-question]').forEach(button=>{
-  button.addEventListener('click',()=>ask(button.dataset.question));
+document.querySelectorAll('[data-question]').forEach(item=>{
+  item.addEventListener('click',()=>ask(item.dataset.question));
 });
 </script>
 </body>
